@@ -65,13 +65,15 @@ public class FortGarrisonScript : MonoBehaviour
 
     // base troop prefab
     public GameObject troopPrefab;
+
     // base unit production
     public UnitStatsBasicSO recruitUnit;
+
     // troops per second
     public float recruitRate = 1.0f;
 
 
-    // troop capacity: soft and hard penalty on recruitment
+    // troop capacity: soft and hard over-pop penalty on recruitment rate
 
     // troop reserve list
     List<TroopReserve> reserveList = new List<TroopReserve>();

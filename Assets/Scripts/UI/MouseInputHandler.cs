@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class ControlHandler : MonoBehaviour
+public class MouseInputHandler : MonoBehaviour
 {
     public GameObject pointerObject;
 

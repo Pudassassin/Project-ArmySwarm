@@ -89,6 +89,8 @@ public class FortGarrisonScript : MonoBehaviour
     float recruitTimer = 0.0f;
     float recruitInterval;
 
+    FortVisualScript visualScript;
+
     ActiveTroopData currentDefender = null;
 
     // fraction / team (wip)
@@ -104,6 +106,8 @@ public class FortGarrisonScript : MonoBehaviour
 
     void Start()
     {
+        visualScript = GetComponent<FortVisualScript>();
+
         // dev placeholder
         AddToTroopReserve(recruitUnit, out recruitRef, count: 10);
 
@@ -255,6 +259,8 @@ public class FortGarrisonScript : MonoBehaviour
                 teamID = currentInvader.teamID;
                 teamColorLight = currentInvader.teamColorLight;
                 teamColorShade = currentInvader.teamColorShade;
+
+                visualScript.SetColor(teamColorLight, teamColorShade);
 
                 AddToTroopReserve(currentInvader.data, out _);
             }

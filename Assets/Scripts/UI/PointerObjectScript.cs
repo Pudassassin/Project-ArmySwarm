@@ -7,7 +7,9 @@ public class PointerObjectScript : MonoBehaviour
     // handle fort selection
 
     List<GameObject> hoveredObjects = new List<GameObject>();
+
     List<GameObject> selectedObjects = new List<GameObject>();
+    GameObject rallyTargetObject = null;
 
     bool modeDragSelect = false;
     int selectedTeamID = -1;
@@ -43,6 +45,9 @@ public class PointerObjectScript : MonoBehaviour
     public void SetStopDragSelect()
     {
         modeDragSelect = false;
+
+        // if end point is "enemy" fort, immediately issue attack rally
+
     }
 
     public void SetDeselect()
@@ -56,12 +61,22 @@ public class PointerObjectScript : MonoBehaviour
         selectedTeamID = -1;
     }
 
+    public void SetIssueRallyOrder()
+    {
+        // usually by right-clicking for mouse, explicit telling fort(s) to rally at target point
+
+    }
+
     void OnTriggerEnter2D(Collider2D otherCol)
     {
         // filter to select forts
+        bool isFort = false;
+        bool isRallyPoint = false;
+
         FortGarrisonScript garrisonScript = otherCol.gameObject.GetComponent<FortGarrisonScript>();
         if (garrisonScript == null)
         {
+            // for now
             return;
         }
 

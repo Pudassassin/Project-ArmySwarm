@@ -8,9 +8,9 @@ public class MouseInputHandler : MonoBehaviour
     public Vector3 worldPointerPos;
 
     InputAction mousePosAction;
-    InputAction mouseClickAction;
+    InputAction mouseAction_LMB, mouseAction_RMB;
 
-    float LMBHeldTime = 0.0f;
+    float LMB_HeldTime = 0.0f, RMB_HeldTime = 0.0f;
 
     PointerObjectScript pointerScript;
 
@@ -22,7 +22,10 @@ public class MouseInputHandler : MonoBehaviour
         mousePosAction = InputSystem.actions.FindAction("Point");
 
         // left mouse click
-        mouseClickAction = InputSystem.actions.FindAction("Click");
+        mouseAction_LMB = InputSystem.actions.FindAction("Click");
+
+        // right mouse click
+        mouseAction_RMB = InputSystem.actions.FindAction("RightClick");
     }
 
     void Update()
@@ -32,25 +35,48 @@ public class MouseInputHandler : MonoBehaviour
         worldPointerPos.Scale(new Vector3(1, 1, 0));
         pointerObject.transform.position = worldPointerPos;
 
-
-        if (mouseClickAction.ReadValue<float>() > 0.0f)
+        // Mouse LEFT CLICK command handle
+        // (for now treat quick click as a short-lived click-n-drag)
+        if (mouseAction_LMB.ReadValue<float>() > 0.0f)
         {
-            // LMB clicked, and held down?
-            if (LMBHeldTime == 0.0f)
+            // clicked, and held down?
+            if (LMB_HeldTime == 0.0f)
             {
                 pointerScript.SetStartDragSelect();
             }
 
-            LMBHeldTime += Time.deltaTime;
+            LMB_HeldTime += Time.deltaTime;
         }
         else
         {
-            if (LMBHeldTime > 0.0f)
+            if (LMB_HeldTime > 0.0f)
             {
                 pointerScript.SetStopDragSelect();
             }
 
-            LMBHeldTime = 0;
+            LMB_HeldTime = 0;
+        }
+
+        // Mouse RIGHT CLICK command handle
+        // >>> manually assign rally target
+        if (mouseAction_RMB.ReadValue<float>() > 0.0f)
+        {
+            // clicked, and held down?
+            if (RMB_HeldTime == 0.0f)
+            {
+                
+            }
+
+            RMB_HeldTime += Time.deltaTime;
+        }
+        else
+        {
+            if (RMB_HeldTime > 0.0f)
+            {
+                
+            }
+
+            RMB_HeldTime = 0;
         }
     }
 }

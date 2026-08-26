@@ -109,15 +109,15 @@ public class FortGarrisonScript : MonoBehaviour
         visualScript = GetComponent<FortVisualScript>();
 
         // dev placeholder
-        AddToTroopReserve(recruitUnit, out recruitRef, count: 10);
-
-        TroopDeployOrder order = new TroopDeployOrder();
-        order.reserveRef = recruitRef;
-        order.armyWidth = 5;
-        order.rowInterval = 1.0f;
-        order.destination = testTarget;
-
-        deployList.Add(order);
+        // AddToTroopReserve(recruitUnit, out recruitRef, count: 10);
+        // 
+        // TroopDeployOrder order = new TroopDeployOrder();
+        // order.reserveRef = recruitRef;
+        // order.armyWidth = 5;
+        // order.rowInterval = 1.0f;
+        // order.destination = testTarget;
+        // 
+        // deployList.Add(order);
     }
 
     // Update is called once per frame
@@ -148,20 +148,44 @@ public class FortGarrisonScript : MonoBehaviour
         {
             if (deployList[i].timer >= deployList[i].rowInterval)
             {
-                // check reserve and update
-                int draftCount;
-                if (deployList[i].reserveRef.headCount > deployList[i].armyWidth)
+                // determine number of troops to spawn
+                int draftCount = 0;
+
+                if (deployList[i].reserveRef.headCount >= deployList[i].headCount)
                 {
-                    deployList[i].reserveRef.headCount -= deployList[i].armyWidth;
-                    draftCount = deployList[i].armyWidth;
+                    // have enough troop to rally
+                    draftCount = deployList[i].headCount;
                 }
                 else
                 {
+                    // running out of troop!
                     draftCount = deployList[i].reserveRef.headCount;
-                    deployList[i].reserveRef.headCount = 0;
+                }
+
+                // trim down to army formation
+                if (draftCount > deployList[i].armyWidth)
+                {
+                    draftCount = deployList[i].armyWidth;
                 }
 
                 // update the reservation here
+                deployList[i].reserveRef.headCount -= draftCount;
+                deployList[i].reserveRef.busyCount -= draftCount;
+                deployList[i].headCount -= draftCount;
+
+                if (deployList[i].reserveRef.headCount <= 0)
+                {
+                    // reserve exhausted, cancel the order!
+                    deployList[i].reserveRef.busyCount -= deployList[i].headCount;
+                    deployList[i].headCount = 0;
+
+                    if (deployList[i].reserveRef.headCount < 0)
+                    {
+                        // ERROR!
+                        Debug.LogError($"Fort at {gameObject.transform.position} has miscounted the troop reserve!");
+                        deployList[i].reserveRef.headCount = 0;
+                    }
+                }
 
                 // spawn troop GameObjects in formation
                 // wip: use debug public vars
@@ -194,8 +218,11 @@ public class FortGarrisonScript : MonoBehaviour
 
             deployList[i].timer += Time.deltaTime;
 
-            // clean up resolved deploy orders
-
+            // clean up resolved / cancelled deploy orders
+            if (deployList[i].headCount <= 0)
+            {
+                deployList.RemoveAt(i);
+            }
         }
 
         /// resolve against invaders
@@ -328,7 +355,66 @@ public class FortGarrisonScript : MonoBehaviour
     }
     
     // [issue order] Send out troops (wip: fixed waypoint, identical deployment patterns, in burst)
+    public void OrderTroopRally(GameObject targetObject, int number, bool isPercentage, bool isSendAll = false)
+    {
+        TroopDeployOrder order = new TroopDeployOrder();
 
+        // (wip) only viable destination is other forts
+        order.destination = targetObject;
+
+        // (wip) omitting unit type, always take the biggest 'available' headcount reserve
+        order.reserveRef = null;
+
+        int maxCount = 0;
+        for (int i = 0; i < reserveList.Count; i++)
+        {
+            int headCount = reserveList[i].headCount - reserveList[i].busyCount;
+            if (headCount > maxCount)
+            {
+                order.reserveRef = reserveList[i];
+                maxCount = headCount;
+            }
+        }
+
+        if (order.reserveRef == null)
+        {
+            return;
+        }
+
+        // determine the rally headcount
+        if (isSendAll || (!isPercentage && number >= maxCount))
+        {
+            order.headCount = maxCount;
+            order.reserveRef.busyCount += maxCount;
+        }
+        else
+        {
+            if (isPercentage)
+            {
+                float currentCount = maxCount;
+                float percentage = ((float)number) / 100.0f;
+                int rallyCount = Mathf.RoundToInt(currentCount * percentage);
+
+                order.headCount = rallyCount;
+                order.reserveRef.busyCount += rallyCount;
+            }
+            else
+            {
+                order.headCount = number;
+                order.reserveRef.busyCount += number;
+            }
+        }
+
+        // (wip) always rally in rows of five-troop formation, interval to keep troops grouped up
+        order.armyWidth = 5;
+
+        // (wip) adjust interval based on troop's speed and size
+        float distancing = order.reserveRef.data.crowdRepelRadius * 2.2f;
+        float speed = order.reserveRef.data.moveSpeed;
+        order.rowInterval = distancing / speed;
+    }
+
+    // Troop combats inside the fort
     void ResolveTroopDM(ActiveTroopData troopA, ActiveTroopData troopB)
     {
         // gather and cast

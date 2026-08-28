@@ -18,38 +18,38 @@ public class TroopCountUIHandler : MonoBehaviour
     // sandbox fields
     public int adjustPercentSmall   = 10;
     public int adjustPercentBig     = 25;
-    public int adjustExactSmall     = 5;
-    public int adjustExactBig       = 25;
+    public int adjustAbsoluteSmall  = 5;
+    public int adjustAbsoluteBig    = 25;
 
     // getter setter
     public int SendValue
     {
         get
         {
-            return sendExact_active ? sendExact_value : sendPercent_value;
+            return sendAbsolute_active ? sendExact_value : sendPercent_value;
         }
     }
 
-    public bool SendExactActive
+    public bool SendAbsoluteActive
     {
         get
         {
-            return sendExact_active;
+            return sendAbsolute_active;
         }
     }
 
-    public bool SendExactAll
+    public bool SendAll
     {
         get
         {
-            return sendExact_all;
+            return sendAbsolute_all || (!sendAbsolute_active && sendPercent_value == 100);
         }
     }
 
     // vars
     int sendPercent_value = 50, sendExact_value = 10;
-    bool sendExact_all = false;
-    bool sendExact_active = false;
+    bool sendAbsolute_all = false;
+    bool sendAbsolute_active = false;
 
     TextMeshProUGUI text_countMode;
 
@@ -70,14 +70,14 @@ public class TroopCountUIHandler : MonoBehaviour
 
     void UpdateCountMode()
     {
-        text_countMode.text = (sendExact_active ? $"{sendPercent_value}% > " : $"[{sendPercent_value}%] < ");
-        if (sendExact_all)
+        text_countMode.text = (sendAbsolute_active ? $"{sendPercent_value}% > " : $"[{sendPercent_value}%] < ");
+        if (sendAbsolute_all)
         {
-            text_countMode.text += (sendExact_active ? $"[ALL]" : $"all");
+            text_countMode.text += (sendAbsolute_active ? $"[ALL]" : $"all");
         }
         else
         {
-            text_countMode.text += (sendExact_active ? $"[{sendExact_value}x]" : $"{sendExact_value}x");
+            text_countMode.text += (sendAbsolute_active ? $"[{sendExact_value}x]" : $"{sendExact_value}x");
         }
     }
 
@@ -85,15 +85,15 @@ public class TroopCountUIHandler : MonoBehaviour
     {
         int sign = (decrease? -1 : 1);
         int delta;
-        if (sendExact_active)
+        if (sendAbsolute_active)
         {
-            if (sendExact_all)
+            if (sendAbsolute_all)
             {
-                sendExact_all = false;
+                sendAbsolute_all = false;
                 return;
             }
 
-            delta = (bigChange? adjustExactBig : adjustExactSmall);
+            delta = (bigChange? adjustAbsoluteBig : adjustAbsoluteSmall);
             sendExact_value = ((sendExact_value / delta) + sign) * delta;
 
             if (sendExact_value < 1)
@@ -115,7 +115,7 @@ public class TroopCountUIHandler : MonoBehaviour
     // For binding with buttons
     public void Button_CountMode()
     {
-        sendExact_active = !sendExact_active;
+        sendAbsolute_active = !sendAbsolute_active;
         UpdateCountMode();
     }
 
@@ -145,10 +145,10 @@ public class TroopCountUIHandler : MonoBehaviour
 
     public void Button_CountMin()
     {
-        if (sendExact_active)
+        if (sendAbsolute_active)
         {
             sendExact_value = 1;
-            sendExact_all = false;
+            sendAbsolute_all = false;
         }
         else
         {
@@ -159,9 +159,9 @@ public class TroopCountUIHandler : MonoBehaviour
 
     public void Button_CountMax()
     {
-        if (sendExact_active)
+        if (sendAbsolute_active)
         {
-            sendExact_all = true;
+            sendAbsolute_all = true;
         }
         else
         {

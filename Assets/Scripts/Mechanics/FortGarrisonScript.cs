@@ -355,7 +355,7 @@ public class FortGarrisonScript : MonoBehaviour
     }
     
     // [issue order] Send out troops (wip: fixed waypoint, identical deployment patterns, in burst)
-    public void OrderTroopRally(GameObject targetObject, int number, bool isPercentage, bool isSendAll = false)
+    public void OrderTroopRally(GameObject targetObject, int number, bool isAbsolute, bool isSendAll = false)
     {
         TroopDeployOrder order = new TroopDeployOrder();
 
@@ -382,14 +382,14 @@ public class FortGarrisonScript : MonoBehaviour
         }
 
         // determine the rally headcount
-        if (isSendAll || (!isPercentage && number >= maxCount))
+        if (isSendAll || (isAbsolute && number >= maxCount))
         {
             order.headCount = maxCount;
             order.reserveRef.busyCount += maxCount;
         }
         else
         {
-            if (isPercentage)
+            if (!isAbsolute)
             {
                 float currentCount = maxCount;
                 float percentage = ((float)number) / 100.0f;
@@ -412,6 +412,8 @@ public class FortGarrisonScript : MonoBehaviour
         float distancing = order.reserveRef.data.crowdRepelRadius * 2.2f;
         float speed = order.reserveRef.data.moveSpeed;
         order.rowInterval = distancing / speed;
+
+        deployList.Add(order);
     }
 
     // Troop combats inside the fort

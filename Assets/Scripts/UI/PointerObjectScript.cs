@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PointerObjectScript : MonoBehaviour
 {
+    public TroopCountUIHandler troopCountUI;
+
     // handle fort selection
 
     List<GameObject> hoveredObjects = new List<GameObject>();
@@ -19,7 +21,6 @@ public class PointerObjectScript : MonoBehaviour
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         
@@ -46,7 +47,7 @@ public class PointerObjectScript : MonoBehaviour
     {
         modeDragSelect = false;
 
-        // if end point is "enemy" fort, immediately issue attack rally
+        // if end point is "enemy" fort, immediately issue attack rally (?)
 
     }
 
@@ -59,11 +60,24 @@ public class PointerObjectScript : MonoBehaviour
         }
         selectedObjects.Clear();
         selectedTeamID = -1;
+
+        rallyTargetObject = null;
     }
 
     public void SetIssueRallyOrder()
     {
         // usually by right-clicking for mouse, explicit telling fort(s) to rally at target point
+        if (hoveredObjects.Count > 0)
+        {
+            // (wip) currently will only cout forts into list of hover-over objects
+            rallyTargetObject = hoveredObjects[0];
+
+            foreach (GameObject fort in selectedObjects)
+            {
+                FortGarrisonScript garrisonScript = fort.GetComponent<FortGarrisonScript>();
+                garrisonScript.OrderTroopRally(rallyTargetObject, troopCountUI.SendValue, troopCountUI.SendAbsoluteActive, troopCountUI.SendAll);
+            }
+        }
 
     }
 

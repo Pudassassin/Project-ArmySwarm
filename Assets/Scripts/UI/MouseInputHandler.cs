@@ -64,7 +64,7 @@ public class MouseInputHandler : MonoBehaviour
             // clicked, and held down?
             if (RMB_HeldTime == 0.0f)
             {
-                
+                pointerScript.SetIssueRallyOrder();
             }
 
             RMB_HeldTime += Time.deltaTime;

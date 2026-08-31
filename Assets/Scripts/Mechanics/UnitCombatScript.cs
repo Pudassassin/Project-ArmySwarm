@@ -48,7 +48,7 @@ public class UnitCombatScript : MonoBehaviour
     void OnEnable()
     {
         hp = maxHP;
-        moveScript = gameObject.AddComponent<UnitMovementScript>();
+        moveScript = gameObject.GetComponent<UnitMovementScript>();
         crowdScript = gameObject.GetComponent<CrowdPhysicScript>();
 
         // lookup and store manager script (actually just refer to class' static property)

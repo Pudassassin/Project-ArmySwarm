@@ -120,7 +120,6 @@ public class FortGarrisonScript : MonoBehaviour
         // deployList.Add(order);
     }
 
-    // Update is called once per frame
     void Update()
     {
         /// tick the recruitment
@@ -182,7 +181,7 @@ public class FortGarrisonScript : MonoBehaviour
                     if (deployList[i].reserveRef.headCount < 0)
                     {
                         // ERROR!
-                        Debug.LogError($"Fort at {gameObject.transform.position} has miscounted the troop reserve!");
+                        Debug.LogError($"Fort at {gameObject.transform.position} has miscounted the troop reserve after the deployment!");
                         deployList[i].reserveRef.headCount = 0;
                     }
                 }
@@ -301,7 +300,7 @@ public class FortGarrisonScript : MonoBehaviour
         }
         textUI.text = uiString;
 
-        // (mock-up) update sprite
+        // (mock-up) update sprite (trigger every frame)
     }
 
     // custom methods
@@ -334,23 +333,25 @@ public class FortGarrisonScript : MonoBehaviour
         reserveRef.headCount += count;
     }
 
+    // wip: go directly to reserve, full recovery, GameObject destroyed
     public void TakeTroopAlly(GameObject troopObj)
     {
-        // wip: go directly to reserve, full recovery, remove from game
+        // wip: go directly to reserve, full recovery, GameObject destroyed
         TroopHandler handler = troopObj.GetComponent<TroopHandler>();
         AddToTroopReserve(handler.troopData, out _);
 
-        // wip
+        // wip: can be opt'd with GameObject pooling
         Destroy(troopObj);
     }
 
+    // wip: add to 'invader' list, to be resolved next game tick
     public void TakeTroopEnemy(GameObject troopObj)
     {
-        // wip: add to 'invader' list, to be resolved
+        // wip: add to 'invader' list, to be resolved next game tick
         ActiveTroopData invaderData = new ActiveTroopData(troopObj);
         invaderList.Add(invaderData);
 
-        // wip
+        // wip: can be opt'd with GameObject pooling
         Destroy(troopObj);
     }
     
@@ -416,7 +417,7 @@ public class FortGarrisonScript : MonoBehaviour
         deployList.Add(order);
     }
 
-    // Troop combats inside the fort
+    // Troop combats inside the fort: sum up whether which one or both is defeated
     void ResolveTroopDM(ActiveTroopData troopA, ActiveTroopData troopB)
     {
         // gather and cast
@@ -426,7 +427,20 @@ public class FortGarrisonScript : MonoBehaviour
         float troopB_HP = troopB.hp;
         float troopB_melee = troopB.data.meleePower;
 
-        // resolve atk=0 case
+        // resolve atk=0 case: one with melee power reduced to zero just hopelessly defeated! (wip: with only 1-dmg poke back)
+        // should be a rare case of (the future's) special troop interactions
+        if (troopA_melee <= 0)
+        {
+            troopA.hp = 0;
+            troopB.hp -= 1;
+            return;
+        }
+        else if (troopB_melee <= 0)
+        {
+            troopB.hp = 0;
+            troopA.hp -= 1;
+            return;
+        }
 
         // calculate outcome
         int troopA_hits = Mathf.CeilToInt(troopB_HP / troopA_melee);

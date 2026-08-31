@@ -1317,8 +1317,8 @@ MonoBehaviour:
   buttonCountMin: {fileID: 2010810722}
   adjustPercentSmall: 10
   adjustPercentBig: 25
-  adjustExactSmall: 5
-  adjustExactBig: 25
+  adjustAbsoluteSmall: 5
+  adjustAbsoluteBig: 25
 --- !u!1 &685406987
 GameObject:
   m_ObjectHideFlags: 0
@@ -4253,6 +4253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e2fd70c7bd05ca409bc3c37fdb696ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PointerObjectScript
+  troopCountUI: {fileID: 636732999}
 --- !u!50 &2128053385
 Rigidbody2D:
   serializedVersion: 5

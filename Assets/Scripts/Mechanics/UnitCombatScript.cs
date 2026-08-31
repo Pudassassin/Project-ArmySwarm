@@ -43,7 +43,7 @@ public class UnitCombatScript : MonoBehaviour
     List<GameObject> engageList = new List<GameObject>();
     List<GameObject> engageListResolve = new List<GameObject>();
 
-    GameObject fortEntryTarget = null;
+    GameObject fortSoonToEnterTarget = null;
 
     void OnEnable()
     {
@@ -72,7 +72,7 @@ public class UnitCombatScript : MonoBehaviour
             engageListResolve.Add(engageList[i]);
         }
 
-        if (fortEntryTarget == null)
+        if (fortSoonToEnterTarget == null)
         {
             for (int i = 0; i < engageListResolve.Count; i++)
             {
@@ -84,7 +84,7 @@ public class UnitCombatScript : MonoBehaviour
                 }
 
                 // ignore troops entering fort
-                if (otherCombat.fortEntryTarget != null)
+                if (otherCombat.fortSoonToEnterTarget != null)
                 {
                     continue;
                 }
@@ -127,36 +127,45 @@ public class UnitCombatScript : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D otherCol)
     {
+        FortGarrisonScript fortScript = otherCol.gameObject.GetComponent<FortGarrisonScript>();
+        UnitCombatScript combatScript = otherCol.gameObject.GetComponent<UnitCombatScript>();
+
         /// Troop vs Fort
-        if (fortEntryTarget == null)
+        // >> reorder the order of operation!
+        // >> fix issue with troops not entering ally fort
+        if (fortScript != null)
         {
-            FortGarrisonScript fortScript = otherCol.gameObject.GetComponent<FortGarrisonScript>();
-            if (fortScript != null)
+            if (fortSoonToEnterTarget == null)
             {
                 // only enter TARGETTED ally fort
                 if ((fortScript.teamID == teamID) && moveScript.targetObject == fortScript.gameObject)
                 {
                     MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
-                    fortEntryTarget = otherCol.gameObject;
+                    fortSoonToEnterTarget = otherCol.gameObject;
                 }
 
                 // force to enter ANY enemy fort
                 if (fortScript.teamID != teamID)
                 {
                     MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
-                    fortEntryTarget = otherCol.gameObject;
+                    fortSoonToEnterTarget = otherCol.gameObject;
                 }
             }
         }
 
         /// Continuous Troop vs Troop check
-        UnitCombatScript combatScript = otherCol.gameObject.GetComponent<UnitCombatScript>();
         if (combatScript == null)
         {
             return;
         }
+        else
+        {
+            if (fortScript == null)
+            {
+                engageList.Add(otherCol.gameObject);
+            }
+        }
 
-        engageList.Add(otherCol.gameObject);
     }
 
     void OnTriggerExit2D(Collider2D otherCol)

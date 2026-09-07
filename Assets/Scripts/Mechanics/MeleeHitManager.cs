@@ -3,6 +3,11 @@ using UnityEngine;
 
 public class MeleeHitManager : MonoBehaviour
 {
+    // Centralized and singleton class handling the melee combats of the game
+    // > trade melee hits on units' collision; simultaneously!
+    // ! case-by-case grace period (decide where should this be handle: this class [end-point] or requester class [source])
+    // > handle melee-hit exclusion
+
     public class MeleeHitData
     {
         public GameObject entityA, entityB;

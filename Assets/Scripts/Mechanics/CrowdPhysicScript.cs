@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class CrowdPhysicScript : MonoBehaviour
 {
+    // Lighten and simplify game object's crowding interactions without having to use the entirely of Unity's physics engine
+    // >> need to cut out [knockback] part of this code as a new class
+
     public class KnockbackData
     {
         public GameObject source;
@@ -95,7 +98,7 @@ public class CrowdPhysicScript : MonoBehaviour
     {
         if (resistCrowding) return;
 
-        // copy list
+        // make a copy of list to be resolved
         clippingListCal.Clear();
         for (int i = 0; i < clippingList.Count; i++)
         {
@@ -103,6 +106,9 @@ public class CrowdPhysicScript : MonoBehaviour
         }
 
         // resolve crowd physics
+        // > make this game object moving itself away from other objects
+        // > avoid crowd compression and objects stacking on top of each other
+        // > force vector(s) scaled based on how close to each of other objects this objects are
         repelVectors.Clear();
 
         foreach (var item in clippingListCal)
@@ -126,7 +132,7 @@ public class CrowdPhysicScript : MonoBehaviour
 
         transform.position += repelVectorSum;
 
-        // resolve knockback
+        // resolve knockback (need to be moved out)
         kbVectors.Clear();
         for (int i = kbList.Count - 1; i >= 0 ; i--)
         {
@@ -147,6 +153,8 @@ public class CrowdPhysicScript : MonoBehaviour
     }
 
     // custom methods
+
+    // (need to be moved out)
     public bool ApplyKnockback(GameObject source, Vector3 forceVector, float weight, float duration)
     {
         for (int i = 0; i < kbList.Count; i++)

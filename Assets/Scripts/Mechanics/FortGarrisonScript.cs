@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class FortGarrisonScript : MonoBehaviour
 {
+    // This is messy chimera! Need to divide and atom-ize the code here!
+    //
     // Troop recruit
     // Troop housing (army reserve)
     // Sending out ally troops

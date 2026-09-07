@@ -4,7 +4,7 @@ using UnityEngine;
 public class TroopTypeButtonScript : MonoBehaviour
 {
     // Simple script to attach to UI buttons, that controls troop type to be deployed and rallied as part of the army
-    // holds stats and button trigger, as well as updating text to the context
+    // holds state and button trigger, as well as updating text to the context
 
     // To be handled by a handler script for the UI/UX section for troop type control
 

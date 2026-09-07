@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class MouseInputHandler : MonoBehaviour
 {
+    // class to interface the mouse control, should be able to 100% playable with mouse alone
+    // > keyboard control will be the QoL / complimentary shortcuts (separated class)
+
     public GameObject pointerObject;
 
     public Vector3 worldPointerPos;

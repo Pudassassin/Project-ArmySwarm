@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class UnitCombatScript : MonoBehaviour
 {
+    // Handle melee hit registers via contact collider
+    // ! case-by-case grace period (decide where should this be handle: this class [source] or manager class [end-point])
+
     class MeleeGraceData
     {
         public GameObject entity;

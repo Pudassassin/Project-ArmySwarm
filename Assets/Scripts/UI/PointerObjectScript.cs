@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PointerObjectScript : MonoBehaviour
 {
+    // centralized class for player's control GameObject: should be compatible with M&K and touchscreen inputs
+
     public TroopCountUIHandler troopCountUI;
 
     // handle fort selection

@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class UnitMovementScript : MonoBehaviour
 {
+    // solely handle unit's movement
+    // > next step: abstraction to handle future movement patterns / behaviours
+
     // temp
     public GameObject targetObject;
     public float moveSpeed = 1f;

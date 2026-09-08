@@ -1,0 +1,146 @@
+=============================
+[UNIT] Unit
+=============================
+Synonym: Troop, Soldier
+=============================
+- The main combatant of the game
+  > one [UNIT] refering to a singular GameObject
+  > Often formed and rallied in group / army
+
+- The key element of the game.
+- Active GameObeject, and LOTS of them!
+
+- Many type of [UNIT] will have different role / propose, stats
+  (and special mechanics unique to a type, in the future)
+
+- Primary Features:
+  > Movement
+    > Destination
+      > [BASE]
+      ? "Waypoint Flag" (temp. Destination)
+    > Pattern (mid-journey behaviour)
+    > Speed
+
+  > Crowd physics ([UNIT] will not stacking / overlapping each other and form cluster / formation)
+    !!> Simple and light-weight logic to handle crowd interactions
+    > 'Size' (usually in radius of circle)
+    > 'Weight' (resistance to knockback / crowding condition)
+    > 'Repelling force' (for repelling other [UNIT] away)
+    > Handle external forces, like "Knockback" from melee combats
+
+  > Basic stats
+    > TeamID (ownership / factions)
+    > HP
+    
+  > Melee combat stats
+    > Damage
+    > 'Knockback Force' (post-combat consequence)
+    ? (on-melee-attack trigger)
+
+
+- Interactions
+  A> Collision with an opposing [UNIT]: [Melee Combat]
+    Both [UNIT]'s resolve at the same time
+
+    A1> Take damage: deduce HP
+        > remove* from game if HP goes down to <= 0
+
+    A2> Take knockback force and apply to [Crowd Physics]
+    A3> Mark each other a tiny grace-period to prevent repeating same-pair melee collisions
+    
+
+  B> Approaching [BASE]
+    B0> Priority: ignore and be exempted from all [UNIT] interactions, only if [BASE] entry occured
+
+    B1> Entering the [BASE] by condition:
+      1.1> Enemy [BASE], regardless if it's the intended target
+        1.1.1> Transfer data to target [BASE], to be resolved as invader
+
+      1.2> Friendly [BASE], only if it is the assigned destination
+        1.2.1> Transfer data to target [BASE], to be resolved as reinforcement
+
+    B2> GameObject be removed* from the game
+
+
+? Planned Features
+  ?> Defensive stats
+    > DEF
+    ? Resistance
+    ? (on-taking-hit trigger)
+
+
+  ?> "Waypoint flag" (pending name and function)
+    > temp gathering point for [UNIT], outside [BASE]
+    > can be anyway the game level allows
+    > limited stock / timing restriction (?)
+
+
+
+=============================
+[BASE] Base
+=============================
+Synonym: Fort, Camp, Garrison
+=============================
+- Serve as a source of [UNIT] generation; manpower "Recruitment"
+- Dynamically changing elements
+  > with [UNIT] as the primary means, [RALLY] to and take over the [BASE]
+
+- Also serve as key elements for game-ending condition
+  > territoral control: acquire and gather up manpower, the 'resource' of the game
+  > conquest: eliminate enemy's control over the [BASE]s, winning the game
+  > defense: prevent enemy from doing the same: losing all controlled [BASE]s and you are defeated!
+
+- Primary Features:
+  > [UNIT] Recruitment
+    > specific [UNIT] type
+    > periodically, in rate of headcount per second
+
+  > [UNIT] storage: [UNIT RESERVE]
+    > mini database representing types and numbers of [UNIT] the [BASE] currently holding
+
+  > [UNIT] deployment: forming [ARMY] to [RALLY] to target [BASE]
+    > Spawn [UNIT] GameObjects in a pattern / formation, assign and initialize stats and data
+
+  > Data resolution with incoming friendly [UNIT]s
+    > [wip] go straight to [UNIT RESERVE] tally
+    
+  > Combat resolution against [INVADER]
+    1> Loop melee combat and sum up result; "fight to the death" style
+    2> Iterate through list of [INVADER]s against [BASE]'s [UNIT RESERVE]
+    3> [BASE] takeovers will temp disable recruitment and conversion capability
+
+
+? Planned Features
+  ? Taking in injured friendly [UNIT]s need recovery as part of game mechanic limiter / challenge
+  ? left-over [UNIT] from the combat within the [BASE] also subject to recovery / partially capable
+
+  ? [UNIT] conversion, from one type to another type
+    Required: Recruitment halted without required [UNIT] in the [BASE]'s [RESERVE]
+    Optional: Shorten process time -or- as parallel conversion process
+    Tactical: Shifting [UNIT] types, adjusting composition to suit the tactical needs
+
+
+
+=============================
+Melee Combat
+=============================
+- one melee combat involves two opposing [UNIT]s collided into each other mid-way to their [RALLY] destination
+- each [UNIT] attack the other [UNIT] with their melee stats: exactly one time each.
+- Then, if survive, get knocked back (almost always).
+
+- Singleton class to manage all the [Melee Combat]s to ensure that:
+  > no duplicated resolutions, at least within the same frame / game tick
+  > no overkills; no hitting the dead / dying [UNIT]s and suffer its counter-attack for free
+  > special cases and logics
+    1> [UNIT] will take [BASE] entry as a priority and ignore all other combats in the process
+
+
+
+=============================
+[UNIT RESERVE] Unit Reserve
+=============================
+- database to store and represent [UNIT] a certain GameObject has stored within
+- Raw data, in a list of [UNIT] types, each has
+  > [UNIT STATS] object: to define [UNIT] type and its characteristics 
+  > headcount: total number of [UNIT]s something actually has
+  > busycount: a way to reserve certain amount of [UNIT] for use with all sort of actions and mechanics

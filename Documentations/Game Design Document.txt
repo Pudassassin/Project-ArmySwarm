@@ -1,0 +1,207 @@
+Project Army Swarm
+v0.1
+
+Win-lose condition:
+  - When a player has no [BASE] under their [Control], that player is eliminiated from the game.
+    * the final chance is that their [UNIT] already [RALLY]ed on the way to a [BASE] manage to take over it and retain the player's [Control]
+      **(maybe a technically troublesome exception to allow: gametesting needed)
+
+  - THE GOAL: Elminate all opponents' [Control] by the means of territoral control
+
+
+Mechanics
+  - [RALLY]ing [UNIT]s to battle and take over [BASE]s
+    > option to select source(s) [BASE] and a destination [BASE]
+    > option to [RALLY] selected [UNIT] type(s)
+    > option to specify amount to [RALLY]: in percentage or fixed amount
+
+  - Each [BASE] varies in [UNIT] it recruits, and how fast the recruitment process goes
+    > Recruited [UNIT] is stored inside its [UNIT CONTAINER]
+    > Can accept [UNIT]s sent its way from other friendly [BASE](s)
+    > Use [UNIT] in [UNIT CONTAINER] to fight with incoming enemy [UNIT]s : [INVADER] and [Invader Combat]
+    > Get taken over and the [Control] transfered to [INVADER]'s player if it eliminated all [UNIT]s in its [UNIT CONTAINER] and still has [INVADER]s remaining
+
+  - [UNIT] 
+    > Has [HP]
+    > [Movement] stats
+    > [Crowd Physic] charateristics
+
+    > Is spawn by ordering a [BASE] to [RALLY] [UNIT]s to another [BASE]
+    > No direct control from player to individual [UNIT]s
+
+    > All opposing [UNIT]s will fight when met each other in middle of their ways
+      > [Melee Combat] collisions
+
+    > Colliding ANY opposing [BASE] : enter it as [INVADER]
+    > Colliding targetted ally [BASE] : enter and join into its [UNIT CONTAINER]
+
+
+Challenges
+  - Everyone starts the game with only a few [BASE]s already under [Control] and small amount of [UNIT]s in their [UNIT CONTAINER]s
+    > initial game state limiting the options
+
+  - There are neutral [BASE] not in any player's [Control], with some defenders inside, opposing and obstructing everyone else
+    > serve as both a direct obstacle and also a tool to the game-ending condition
+
+  - The level design and layout encourage tactical decisions
+    > slowly introduce new mechanices, new [UNIT] types, freshing out scenarios and challenges
+    > passive tutorial progression (and option to skip directly into skill-check)
+
+
+
+
+=============================
+[UNIT] Unit
+=============================
+Synonym: Troop, Soldier
+=============================
+- The main combatant of the game
+  > one [UNIT] refering to a singular GameObject
+  > Often formed and rallied in group / army
+
+- The key element of the game.
+- Active GameObeject, and LOTS of them!
+
+- Many type of [UNIT] will have different role / propose, stats
+  (and special mechanics unique to a type, in the future)
+
+- Primary Features:
+  > Movement
+    > Destination
+      > [BASE]
+    > Pattern (mid-journey behaviour)
+    > Speed
+
+  > [Crowd Physic]
+
+  > Basic stats
+    > TeamID (player ownership)
+    > HP
+    
+  > Melee combat stats
+    > Damage
+    > 'Knockback Force' (post-combat consequence)
+
+
+- Interactions
+  A> Collision with an opposing [UNIT] : [Melee Combat]
+
+  B> Approaching [BASE]
+    B0> Priority: ignore and be exempted from all [UNIT] interactions, only if [BASE] entry occured
+
+    B1> Entering the [BASE] by condition :
+      1.1> Enemy [BASE], regardless if it's the intended target
+        1.1.1> Transfer data to target [BASE], to be resolved as [INVADER]
+
+      1.2> Friendly [BASE], only if it is the assigned destination
+        1.2.1> Transfer data to target [BASE], to be resolved as reinforcement
+
+    B2> GameObject be removed* from the game
+
+
+? Planned Features
+  ?> Passive effects
+  ?> Conditional-triggered effects
+
+  ?> Defensive stats
+    > DEF
+    ? Resistance
+
+  ?> "Waypoint flag" (pending name and function)
+    > temp gathering point for [UNIT], outside [BASE]
+    > can be anyway the game level allows
+    > limited stock / timing restriction (?)
+
+
+
+=============================
+[BASE] Base
+=============================
+Synonym: Fort, Camp, Garrison
+=============================
+- Serve as a source of [UNIT] generation; manpower "Recruitment"
+- Dynamically changing elements
+  > with [UNIT] as the primary means, [RALLY] to and take over the [BASE]
+
+- Also serve as key elements for game-ending condition
+  > territoral control: acquire and gather up manpower, the 'resource' of the game
+  > conquest: eliminate enemy's control over the [BASE]s, winning the game
+  > defense: prevent enemy from doing the same: losing all controlled [BASE]s and you are defeated!
+
+- Primary Features:
+  > [UNIT] Recruitment
+    > specific [UNIT] type
+    > periodically, in rate of headcount per second
+
+  > [UNIT] storage: [UNIT CONTAINER]
+    > mini database representing types and numbers of [UNIT] the [BASE] currently holding
+
+  > [UNIT] deployment: forming [ARMY] to [RALLY] to target [BASE]
+    > Spawn [UNIT] GameObjects in a pattern / formation, assign and initialize stats and data
+
+  > Data resolution with incoming friendly [UNIT]s
+    > [wip] go straight to [UNIT CONTAINER] tally
+    
+  > Combat resolution against [INVADER] : [Invader Combat]
+
+
+? Planned Features
+  ? Taking in injured friendly [UNIT]s need recovery as part of game mechanic limiter / challenge
+  ? left-over [UNIT] from the combat within the [BASE] also subject to recovery / partially capable
+
+  ? [UNIT] conversion, from one type to another type
+    Required: Recruitment halted without required [UNIT] in the [BASE]'s [CONTAINER]
+    Optional: Shorten process time -or- as parallel conversion process
+    Tactical: Changing [UNIT] types, adjusting composition to suit the tactical needs
+
+
+
+
+=============================
+Crowd Physic
+=============================
+[UNIT] will not stacking / overlapping each other; repel from each other when squeezed / pressed; form cluster / formation
+  > Simple and light-weight logic to handle crowd interactions
+    > 'Size' (usually in radius of circle)
+    > 'Weight' (resistance to knockback / crowding condition)
+    > 'Repelling force' (for repelling other [UNIT] away)
+    > Handle external forces, like "Knockback" from melee combats
+
+[Obstacle] serve as static hitbox so [UNIT]s will not move through, but be nudged to go around it
+
+
+
+=============================
+Melee Combat
+=============================
+- one melee combat involves two opposing [UNIT]s collided into each other mid-way to their [RALLY] destination
+- each [UNIT] attack the other [UNIT] with their melee stats: exactly one time each.
+- Then, if survive, get knocked back (almost always).
+
+- Singleton class to manage all the [Melee Combat]s to ensure that:
+  > no duplicated resolutions, at least within the same frame / game tick
+  > no overkills; no hitting the dead / dying [UNIT]s and suffer its counter-attack for free
+  > special cases and logics
+    1> [UNIT] will take [BASE] entry as a priority and ignore all other combats in the process
+
+
+
+=============================
+Invader Combat
+=============================
+- happen when a [UNIT] enters an opposing [BASE], creating [Invasion]
+  > [BASE]-attacking [UNIT] is called [INVADER]
+  > [BASE]-defending [UNIT] from its [UNIT CONTAINER] is called [DEFENDER]
+  > Resolved by looping 1-1 [Melee Combat] until either (or both) [UNIT] is defeated
+    > Iterate list of [INVADER]s against list of [UNIT CONTAINER]s
+
+
+
+=============================
+[UNIT CONTAINER] Unit Container
+=============================
+- database to store and represent [UNIT] a certain GameObject has stored within
+- Raw data, in a list of [UNIT] types, each has
+  > [UNIT STATS] object: to define [UNIT] type and its characteristics
+  > headcount: total number of [UNIT]s something actually has
+  > busycount: a way to reserve certain amount of [UNIT] for use with all sort of actions and mechanics

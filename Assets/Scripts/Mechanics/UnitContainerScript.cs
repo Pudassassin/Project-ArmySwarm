@@ -68,7 +68,7 @@ public class UnitContainerScript : MonoBehaviour
     void Update()
     {
         // (mock-up) [UNIT CONTAINER] UI
-        string uiString = "Troops\n";
+        string uiString = "Contain Unit:\n";
         for (int i = 0; i < unitTypeList.Count; i++)
         {
             uiString += unitTypeList[i].data.troopName + " x " + unitTypeList[i].headCount + "\n";
@@ -79,20 +79,49 @@ public class UnitContainerScript : MonoBehaviour
 
     }
 
-    // custom methods
+    //=================================
+    // CUSTOM METHODS
+    //=================================
 
-    // Add directly to container
-    public void AddUnit(UnitStatsBasicSO unitData, out UnitTypeSlot containerRef, int count = 1)
+    // Look into the list for the specific [UNIT] type and do nothing else
+    // > return BOOL search result
+    // > OUTput the slot reference; result or NULL
+    public bool QueryUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef)
     {
-        containerRef = null;
+        bool isSuccess = false;
+        typeSlotRef = null;
+
+        for (int i = 0; i < unitTypeList.Count; i++)
+        {
+            if (unitTypeList[i].data == unitData)
+            {
+                typeSlotRef = unitTypeList[i];
+
+                isSuccess = true;
+
+                break;
+            }
+        }
+
+        return isSuccess;
+    }
+
+    // Try to allocate a fresh new slot for [UNIT] type if not already exist
+    // > return BOOL search result
+    // > OUTput the slot reference; existing or new one
+    // > insertion position based on 'tactical priority'
+    public bool Allocate(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef)
+    {
+        bool isAllocated = false;
+        typeSlotRef = null;
         int index = 0;
         int insertPos = 0;
 
         for (; index < unitTypeList.Count; index++)
         {
-            if (unitData.troopName == unitTypeList[index].data.troopName)
+            if (unitData == unitTypeList[index].data)
             {
-                containerRef = unitTypeList[index];
+                typeSlotRef = unitTypeList[index];
                 break;
             }
 
@@ -104,51 +133,115 @@ public class UnitContainerScript : MonoBehaviour
 
         if (index >= unitTypeList.Count)
         {
-            containerRef = new UnitTypeSlot(unitData);
-            unitTypeList.Insert(insertPos, containerRef);
+            typeSlotRef = new UnitTypeSlot(unitData);
+            unitTypeList.Insert(insertPos, typeSlotRef);
+            isAllocated = true;
         }
 
-        containerRef.headCount += count;
+        return isAllocated;
     }
 
-    // Remove and deduce directly from container, if available
-    public bool RemoveUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef, out int actualCount, int count = 1)
+    //==============================================
+    // Methods to add [UNIT] directly to container
+    public void AddUnit(UnitTypeSlot typeSlotRef, int count = 1)
     {
-        // whether or not the request can pull out at least one head of the specific [UNIT] type.
+        // Add directly to specified slot, after the checks
+        // + recursion atom
+        if (typeSlotRef == null)
+        {
+            Debug.LogWarning("UnitContainer.AddUnit - Attempted to add a unit to a NULL slot!");
+            return;
+        }
+        if (count <= 0)
+        {
+            Debug.LogWarning($"UnitContainer.AddUnit - Invalid amount to add to the container: {count}");
+            return;
+        }
+
+        if (unitTypeList.Contains(typeSlotRef))
+        {
+            typeSlotRef.headCount += count;
+        }
+        else
+        {
+            Debug.LogWarning($"UnitContainer.AddUnit - Attempted to add a unit to a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
+        }
+    }
+
+    // MACRO method
+    public void AddUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef, int count = 1)
+    {
+        // MACRO method
+        // 1> allocate [UNIT] slot
+        // 2> add fresh new [UNIT](s)
+
+        typeSlotRef = null;
+        Allocate(unitData, out typeSlotRef);
+        AddUnit(typeSlotRef, count);
+    }
+
+
+    //==============================================
+    // Methods to remove and deduce directly from container
+    public bool RemoveUnit(UnitTypeSlot typeSlotRef, out int actualCount, int count = 1)
+    {
+        // Remove directly from a specified slot, after the checks
+        // + recursion atom
         bool isSuccess = false;
         actualCount = 0;
-        typeSlotRef = null;
 
-        for (int i = 0; i < unitTypeList.Count; i++)
+        if (typeSlotRef == null)
         {
-            if (unitTypeList[i].data == unitData)
+            Debug.LogWarning("UnitContainer.RemoveUnit - Attempted to remove a unit from a NULL slot!");
+            return false;
+        }
+
+        if (unitTypeList.Contains(typeSlotRef))
+        {
+            if (typeSlotRef.headCount <= 0)
             {
-                typeSlotRef = unitTypeList[i];
-
-                if (unitTypeList[i].headCount <= 0)
-                {
-                    actualCount = 0;
-                    isSuccess = false;
-                }
-                else if (unitTypeList[i].headCount < count)
-                {
-                    actualCount = unitTypeList[i].headCount;
-                    unitTypeList[i].headCount = 0;
-                    isSuccess = true;
-                }
-                else
-                {
-                    actualCount = count;
-                    unitTypeList[i].headCount -= count;
-                    isSuccess = true;
-                }
-
-                break;
+                actualCount = 0;
+                isSuccess = false;
             }
+            else if (typeSlotRef.headCount < count)
+            {
+                actualCount = typeSlotRef.headCount;
+                typeSlotRef.headCount = 0;
+                isSuccess = true;
+            }
+            else
+            {
+                actualCount = count;
+                typeSlotRef.headCount -= count;
+                isSuccess = true;
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"UnitContainer.RemoveUnit - Attempted to remove a unit from a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
         }
 
         return isSuccess;
     }
 
+    // MACRO method
+    public bool RemoveUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef, out int actualCount, int count = 1)
+    {
+        // return BOOL whether or not the request can pull out at least one head of the specific [UNIT] type.
+        bool isSuccess = false;
+        actualCount = 0;
+        typeSlotRef = null;
+
+        if (QueryUnit(unitData, out typeSlotRef))
+        {
+            isSuccess = RemoveUnit(typeSlotRef, out actualCount, count);
+        }
+
+        return isSuccess;
+    }
+
+
+    //==============================================
+    // Methods to make reservation 'ticket'
 
 }

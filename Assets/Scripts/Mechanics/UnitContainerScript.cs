@@ -26,7 +26,7 @@ public class UnitContainerScript : MonoBehaviour
         public int headCount = 0;
 
         // its data changes will be handled by external requester
-        List<ReserveTicket> reserveTickets = new List<ReserveTicket>();
+        public List<ReserveTicket> reserveTickets = new List<ReserveTicket>();
         
         public int busyCount
         {
@@ -58,6 +58,7 @@ public class UnitContainerScript : MonoBehaviour
 
     List<UnitTypeSlot> unitTypeList = new List<UnitTypeSlot>();
 
+    // debug temp
     public TextMeshProUGUI textUI;
 
     void Start()
@@ -110,7 +111,7 @@ public class UnitContainerScript : MonoBehaviour
     // > return BOOL search result
     // > OUTput the slot reference; existing or new one
     // > insertion position based on 'tactical priority'
-    public bool Allocate(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef)
+    public bool AllocateSlot(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef)
     {
         bool isAllocated = false;
         typeSlotRef = null;
@@ -143,18 +144,18 @@ public class UnitContainerScript : MonoBehaviour
 
     //==============================================
     // Methods to add [UNIT] directly to container
-    public void AddUnit(UnitTypeSlot typeSlotRef, int count = 1)
+    public void AddUnit(UnitTypeSlot typeSlotRef, int count)
     {
         // Add directly to specified slot, after the checks
         // + recursion atom
         if (typeSlotRef == null)
         {
-            Debug.LogWarning("UnitContainer.AddUnit - Attempted to add a unit to a NULL slot!");
+            Debug.LogError($"UnitContainer.AddUnit - Attempted to add to a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
             return;
         }
         if (count <= 0)
         {
-            Debug.LogWarning($"UnitContainer.AddUnit - Invalid amount to add to the container: {count}");
+            Debug.LogError($"UnitContainer.AddUnit - Invalid amount to add: {count}\n\"{gameObject.name}\" [{transform.position}]\n");
             return;
         }
 
@@ -164,26 +165,26 @@ public class UnitContainerScript : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"UnitContainer.AddUnit - Attempted to add a unit to a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
+            Debug.LogError($"UnitContainer.AddUnit - Attempted to add a unit to a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
         }
     }
 
     // MACRO method
-    public void AddUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef, int count = 1)
+    public void AddUnit(UnitStatsBasicSO unitData, int count, out UnitTypeSlot typeSlotRef)
     {
         // MACRO method
         // 1> allocate [UNIT] slot
         // 2> add fresh new [UNIT](s)
 
         typeSlotRef = null;
-        Allocate(unitData, out typeSlotRef);
+        AllocateSlot(unitData, out typeSlotRef);
         AddUnit(typeSlotRef, count);
     }
 
 
     //==============================================
     // Methods to remove and deduce directly from container
-    public bool RemoveUnit(UnitTypeSlot typeSlotRef, out int actualCount, int count = 1)
+    public bool RemoveUnit(UnitTypeSlot typeSlotRef, int count, out int actualCount)
     {
         // Remove directly from a specified slot, after the checks
         // + recursion atom
@@ -192,7 +193,12 @@ public class UnitContainerScript : MonoBehaviour
 
         if (typeSlotRef == null)
         {
-            Debug.LogWarning("UnitContainer.RemoveUnit - Attempted to remove a unit from a NULL slot!");
+            Debug.LogError($"UnitContainer.RemoveUnit - Attempted to remove from a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
+            return false;
+        }
+        if (count <= 0)
+        {
+            Debug.LogError($"UnitContainer.RemoveUnit - Invalid amount to remove: {count}\n\"{gameObject.name}\" [{transform.position}]\n");
             return false;
         }
 
@@ -218,14 +224,14 @@ public class UnitContainerScript : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"UnitContainer.RemoveUnit - Attempted to remove a unit from a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
+            Debug.LogError($"UnitContainer.RemoveUnit - Attempted to remove from a slot not belong to this GameObject:\n\"{gameObject.name}\" [{transform.position}]\n");
         }
 
         return isSuccess;
     }
 
     // MACRO method
-    public bool RemoveUnit(UnitStatsBasicSO unitData, out UnitTypeSlot typeSlotRef, out int actualCount, int count = 1)
+    public bool RemoveUnit(UnitStatsBasicSO unitData, int count, out UnitTypeSlot typeSlotRef, out int actualCount)
     {
         // return BOOL whether or not the request can pull out at least one head of the specific [UNIT] type.
         bool isSuccess = false;
@@ -234,7 +240,7 @@ public class UnitContainerScript : MonoBehaviour
 
         if (QueryUnit(unitData, out typeSlotRef))
         {
-            isSuccess = RemoveUnit(typeSlotRef, out actualCount, count);
+            isSuccess = RemoveUnit(typeSlotRef, count, out actualCount);
         }
 
         return isSuccess;
@@ -242,6 +248,139 @@ public class UnitContainerScript : MonoBehaviour
 
 
     //==============================================
-    // Methods to make reservation 'ticket'
+    // Methods involve around unit reservation
 
+    // Check reserve ticket's validation
+    public bool CheckReserve(UnitTypeSlot typeSlotRef, ReserveTicket ticket)
+    {
+        // return true if ticket is indeed linked to the slot reference AND the slot itself belong to this container
+        // bool isSuccess = false;
+
+        if (typeSlotRef == null || ticket == null)
+        {
+            return false;
+        }
+        else if (!unitTypeList.Contains(typeSlotRef))
+        {
+            return false;
+        }
+        else if (!typeSlotRef.reserveTickets.Contains(ticket))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    // Remove reservation from a slot
+    public bool CancelReserve(UnitTypeSlot typeSlotRef, ReserveTicket ticket)
+    {
+        // return BOOL true, if reservation is cancelled, without issue
+
+        if (CheckReserve(typeSlotRef, ticket))
+        {
+            typeSlotRef.reserveTickets.Remove(ticket);
+            return true;
+        }
+        
+        return false;
+    }
+
+
+    //==============================================
+    // Methods to make reservation 'ticket'
+    public bool MakeReserve(UnitTypeSlot typeSlotRef, int count, object requesterObj, out int actualCount, out ReserveTicket ticket, bool ignoreLimit = false)
+    {
+        // return BOOL when reservation is made for at least one unit, without issue (respecting limitor flag)
+        bool isSuccess = false;
+        actualCount = 0;
+        ticket = null;
+
+        if (typeSlotRef == null)
+        {
+            Debug.LogError($"UnitContainer.RemoveUnit - Attempted to reserve from a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
+            return false;
+        }
+        if (count <= 0)
+        {
+            Debug.LogError($"UnitContainer.RemoveUnit - Invalid amount to reserve: {count}\n\"{gameObject.name}\" [{transform.position}]\n");
+            return false;
+        }
+
+        int readyCount = typeSlotRef.readyCount;
+        if (ignoreLimit || readyCount >= count)
+        {
+            actualCount = count;
+        }
+        else if (readyCount > 0)
+        {
+            actualCount = readyCount;
+        }
+
+        if (actualCount > 0)
+        {
+            ticket = new ReserveTicket(requesterObj, actualCount);
+            typeSlotRef.reserveTickets.Add(ticket);
+            isSuccess = true;
+        }
+
+        return isSuccess;
+    }
+
+    // MACRO method
+    public bool MakeReserve(UnitStatsBasicSO unitData, int count, object requesterObj, out UnitTypeSlot typeSlotRef, out int actualCount, out ReserveTicket ticket, bool ignoreLimit = false)
+    {
+        // return BOOL true, when reservation is made for at least one unit, without issue (respecting limitor flag)
+        bool isSuccess = false;
+        actualCount = 0;
+        ticket = null;
+
+        if (QueryUnit(unitData, out typeSlotRef))
+        {
+            isSuccess = MakeReserve(typeSlotRef, count, requesterObj, out actualCount, out ticket, ignoreLimit);
+        }
+
+        return isSuccess;
+    }
+
+    //==============================================
+    // Methods to pull from reservation, redeeming 'ticket'
+    // >> potentially be use repeatedly
+    public bool ClaimReserve(UnitTypeSlot typeSlotRef, ReserveTicket ticket, int pullCount, out int actualPullCount, bool ignoreInsufficent = true)
+    {
+        // return BOOL true, if reservation is valid and has pull at least one unit from a container, without issue
+        bool isSuccess = false;
+        actualPullCount = 0;
+
+        if (CheckReserve(typeSlotRef, ticket))
+        {
+            actualPullCount = Mathf.Min(ticket.reserveCount, pullCount);
+
+            if (typeSlotRef.headCount >= actualPullCount)
+            {
+                typeSlotRef.headCount -= actualPullCount;
+                ticket.reserveCount -= actualPullCount;
+
+                isSuccess = true;
+            }
+            else if (typeSlotRef.headCount > 0)
+            {
+                if (ignoreInsufficent)
+                {
+                    actualPullCount = typeSlotRef.headCount;
+                    typeSlotRef.headCount = 0;
+                    ticket.reserveCount -= actualPullCount;
+
+                    isSuccess = true;
+                }
+                else
+                {
+                    actualPullCount = 0;
+                }
+            }
+        }
+
+        return isSuccess;
+    }
 }

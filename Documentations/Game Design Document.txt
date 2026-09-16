@@ -2,22 +2,22 @@ Project Army Swarm
 v0.1
 
 Win-lose condition:
-  - When a player has no [BASE] under their [Control], that player is eliminiated from the game.
-    * the final chance is that their [UNIT] already [RALLY]ed on the way to a [BASE] manage to take over it and retain the player's [Control]
+  - When a player has no [FORT] under their [Control], that player is eliminiated from the game.
+    * the final chance is that their [UNIT] already [RALLY]ed on the way to a [FORT] manage to take over it and retain the player's [Control]
       **(maybe a technically troublesome exception to allow: gametesting needed)
 
   - THE GOAL: Elminate all opponents' [Control] by the means of territoral control
 
 
 Mechanics
-  - [RALLY]ing [UNIT]s to battle and take over [BASE]s
-    > option to select source(s) [BASE] and a destination [BASE]
+  - [RALLY]ing [UNIT]s to battle and take over [FORT]s
+    > option to select source(s) [FORT] and a destination [FORT]
     > option to [RALLY] selected [UNIT] type(s)
     > option to specify amount to [RALLY]: in percentage or fixed amount
 
-  - Each [BASE] varies in [UNIT] it recruits, and how fast the recruitment process goes
+  - Each [FORT] varies in [UNIT] it recruits, and how fast the recruitment process goes
     > Recruited [UNIT] is stored inside its [UNIT CONTAINER]
-    > Can accept [UNIT]s sent its way from other friendly [BASE](s)
+    > Can accept [UNIT]s sent its way from other friendly [FORT](s)
     > Use [UNIT] in [UNIT CONTAINER] to fight with incoming enemy [UNIT]s : [INVADER] and [Invader Combat]
     > Get taken over and the [Control] transfered to [INVADER]'s player if it eliminated all [UNIT]s in its [UNIT CONTAINER] and still has [INVADER]s remaining
 
@@ -26,21 +26,21 @@ Mechanics
     > [Movement] stats
     > [Crowd Physic] charateristics
 
-    > Is spawn by ordering a [BASE] to [RALLY] [UNIT]s to another [BASE]
+    > Is spawn by ordering a [FORT] to [RALLY] [UNIT]s to another [FORT]
     > No direct control from player to individual [UNIT]s
 
     > All opposing [UNIT]s will fight when met each other in middle of their ways
       > [Melee Combat] collisions
 
-    > Colliding ANY opposing [BASE] : enter it as [INVADER]
-    > Colliding targetted ally [BASE] : enter and join into its [UNIT CONTAINER]
+    > Colliding ANY opposing [FORT] : enter it as [INVADER]
+    > Colliding targetted ally [FORT] : enter and join into its [UNIT CONTAINER]
 
 
 Challenges
-  - Everyone starts the game with only a few [BASE]s already under [Control] and small amount of [UNIT]s in their [UNIT CONTAINER]s
+  - Everyone starts the game with only a few [FORT]s already under [Control] and small amount of [UNIT]s in their [UNIT CONTAINER]s
     > initial game state limiting the options
 
-  - There are neutral [BASE] not in any player's [Control], with some defenders inside, opposing and obstructing everyone else
+  - There are neutral [FORT] not in any player's [Control], with some defenders inside, opposing and obstructing everyone else
     > serve as both a direct obstacle and also a tool to the game-ending condition
 
   - The level design and layout encourage tactical decisions
@@ -68,7 +68,7 @@ Synonym: Troop, Soldier
 - Primary Features:
   > Movement
     > Destination
-      > [BASE]
+      > [FORT]
     > Pattern (mid-journey behaviour)
     > Speed
 
@@ -86,15 +86,15 @@ Synonym: Troop, Soldier
 - Interactions
   A> Collision with an opposing [UNIT] : [Melee Combat]
 
-  B> Approaching [BASE]
-    B0> Priority: ignore and be exempted from all [UNIT] interactions, only if [BASE] entry occured
+  B> Approaching [FORT]
+    B0> Priority: ignore and be exempted from all [UNIT] interactions, only if [FORT] entry occured
 
-    B1> Entering the [BASE] by condition :
-      1.1> Enemy [BASE], regardless if it's the intended target
-        1.1.1> Transfer data to target [BASE], to be resolved as [INVADER]
+    B1> Entering the [FORT] by condition :
+      1.1> Enemy [FORT], regardless if it's the intended target
+        1.1.1> Transfer data to target [FORT], to be resolved as [INVADER]
 
-      1.2> Friendly [BASE], only if it is the assigned destination
-        1.2.1> Transfer data to target [BASE], to be resolved as reinforcement
+      1.2> Friendly [FORT], only if it is the assigned destination
+        1.2.1> Transfer data to target [FORT], to be resolved as reinforcement
 
     B2> GameObject be removed* from the game
 
@@ -108,25 +108,25 @@ Synonym: Troop, Soldier
     ? Resistance
 
   ?> "Waypoint flag" (pending name and function)
-    > temp gathering point for [UNIT], outside [BASE]
+    > temp gathering point for [UNIT], outside [FORT]
     > can be anyway the game level allows
     > limited stock / timing restriction (?)
 
 
 
 =============================
-[BASE] Base
+[FORT] Fort
 =============================
-Synonym: Fort, Camp, Garrison
+Synonym: Camp, Garrison, Hive, Nest, Dungeon, etc.
 =============================
 - Serve as a source of [UNIT] generation; manpower "Recruitment"
 - Dynamically changing elements
-  > with [UNIT] as the primary means, [RALLY] to and take over the [BASE]
+  > with [UNIT] as the primary means, [RALLY] to and take over the [FORT]
 
 - Also serve as key elements for game-ending condition
   > territoral control: acquire and gather up manpower, the 'resource' of the game
-  > conquest: eliminate enemy's control over the [BASE]s, winning the game
-  > defense: prevent enemy from doing the same: losing all controlled [BASE]s and you are defeated!
+  > conquest: eliminate enemy's control over the [FORT]s, winning the game
+  > defense: prevent enemy from doing the same: losing all controlled [FORT]s and you are defeated!
 
 - Primary Features:
   > [UNIT] Recruitment
@@ -134,9 +134,9 @@ Synonym: Fort, Camp, Garrison
     > periodically, in rate of headcount per second
 
   > [UNIT] storage: [UNIT CONTAINER]
-    > mini database representing types and numbers of [UNIT] the [BASE] currently holding
+    > mini database representing types and numbers of [UNIT] the [FORT] currently holding
 
-  > [UNIT] deployment: forming [ARMY] to [RALLY] to target [BASE]
+  > [UNIT] deployment: forming [ARMY] to [RALLY] to target [FORT]
     > Spawn [UNIT] GameObjects in a pattern / formation, assign and initialize stats and data
 
   > Data resolution with incoming friendly [UNIT]s
@@ -147,10 +147,10 @@ Synonym: Fort, Camp, Garrison
 
 ? Planned Features
   ? Taking in injured friendly [UNIT]s need recovery as part of game mechanic limiter / challenge
-  ? left-over [UNIT] from the combat within the [BASE] also subject to recovery / partially capable
+  ? left-over [UNIT] from the combat within the [FORT] also subject to recovery / partially capable
 
   ? [UNIT] conversion, from one type to another type
-    Required: Recruitment halted without required [UNIT] in the [BASE]'s [CONTAINER]
+    Required: Recruitment halted without required [UNIT] in the [FORT]'s [UNIT CONTAINER]
     Optional: Shorten process time -or- as parallel conversion process
     Tactical: Changing [UNIT] types, adjusting composition to suit the tactical needs
 
@@ -182,16 +182,16 @@ Melee Combat
   > no duplicated resolutions, at least within the same frame / game tick
   > no overkills; no hitting the dead / dying [UNIT]s and suffer its counter-attack for free
   > special cases and logics
-    1> [UNIT] will take [BASE] entry as a priority and ignore all other combats in the process
+    1> [UNIT] will take [FORT] entry as a priority and ignore all other combats in the process
 
 
 
 =============================
 Invader Combat
 =============================
-- happen when a [UNIT] enters an opposing [BASE], creating [Invasion]
-  > [BASE]-attacking [UNIT] is called [INVADER]
-  > [BASE]-defending [UNIT] from its [UNIT CONTAINER] is called [DEFENDER]
+- happen when a [UNIT] enters an opposing [FORT], creating [Invasion]
+  > [FORT]-attacking [UNIT] is called [INVADER]
+  > [FORT]-defending [UNIT] from its [UNIT CONTAINER] is called [DEFENDER]
   > Resolved by looping 1-1 [Melee Combat] until either (or both) [UNIT] is defeated
     > Iterate list of [INVADER]s against list of [UNIT CONTAINER]s
 

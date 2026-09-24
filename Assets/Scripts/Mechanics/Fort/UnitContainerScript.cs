@@ -56,7 +56,8 @@ public class UnitContainerScript : MonoBehaviour
 
     }
 
-    List<UnitTypeSlot> unitTypeList = new List<UnitTypeSlot>();
+    // (wip) temp public
+    public List<UnitTypeSlot> unitTypeList = new List<UnitTypeSlot>();
 
     // debug temp
     public TextMeshProUGUI textUI;
@@ -290,21 +291,21 @@ public class UnitContainerScript : MonoBehaviour
 
     //==============================================
     // Methods to make reservation 'ticket'
-    public bool MakeReserve(UnitTypeSlot typeSlotRef, int count, object requesterObj, out int actualCount, out ReserveTicket ticket, bool ignoreLimit = false)
+    public bool MakeReserve(UnitTypeSlot typeSlotRef, int count, object requesterObj, out int actualCount, out ReserveTicket reserveTicket, bool ignoreLimit = false)
     {
         // return BOOL when reservation is made for at least one unit, without issue (respecting limitor flag)
         bool isSuccess = false;
         actualCount = 0;
-        ticket = null;
+        reserveTicket = null;
 
         if (typeSlotRef == null)
         {
-            Debug.LogError($"UnitContainer.RemoveUnit - Attempted to reserve from a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
+            Debug.LogError($"UnitContainer.MakeReserve - Attempted to reserve from a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
             return false;
         }
         if (count <= 0)
         {
-            Debug.LogError($"UnitContainer.RemoveUnit - Invalid amount to reserve: {count}\n\"{gameObject.name}\" [{transform.position}]\n");
+            Debug.LogError($"UnitContainer.MakeReserve - Invalid amount to reserve: {count}\n\"{gameObject.name}\" [{transform.position}]\n");
             return false;
         }
 
@@ -320,8 +321,8 @@ public class UnitContainerScript : MonoBehaviour
 
         if (actualCount > 0)
         {
-            ticket = new ReserveTicket(requesterObj, actualCount);
-            typeSlotRef.reserveTickets.Add(ticket);
+            reserveTicket = new ReserveTicket(requesterObj, actualCount);
+            typeSlotRef.reserveTickets.Add(reserveTicket);
             isSuccess = true;
         }
 

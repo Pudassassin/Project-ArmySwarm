@@ -1,0 +1,195 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class MeleeCombatScript : MonoBehaviour
+{
+    // Handle exclusively [MELEE COMBAT] and [FORT INVASION] registers via contact collider
+    // > also handle grace-period as part of [MELEE COMBAT] post-resolution
+
+    class MeleeGraceData
+    {
+        public GameObject entity;
+        public float duration;
+
+        public MeleeGraceData(GameObject entity, float duration)
+        {
+            this.entity = entity;
+            this.duration = duration;
+        }
+
+        public bool Tick()
+        {
+            duration -= Time.deltaTime;
+            return duration < 0;
+        }
+    }
+
+    // temp
+    public int damage = 0;
+
+    // public int rangedPower = 0;
+    public float knockbackForce = 0.25f;
+    public float knockbackDuration = 0.3f;
+
+    public float graceTime = 0.5f;
+
+    // var
+    List<MeleeGraceData> graceList = new List<MeleeGraceData>();
+
+    List<GameObject> engageList = new List<GameObject>();
+    List<GameObject> engageListResolve = new List<GameObject>();
+
+    GameObject fortSoonToEnterTarget = null;
+
+    //====================================
+    // Unity Messages
+
+    void Update()
+    {
+        // clean up
+        for (int i = engageList.Count - 1; i >= 0; i--)
+        {
+            if (engageList[i] == null)
+            {
+                engageList.RemoveAt(i);
+            }
+        }
+
+        // copy list for resolve
+        engageListResolve.Clear();
+        for (int i = 0; i < engageList.Count; i++)
+        {
+            engageListResolve.Add(engageList[i]);
+        }
+
+        if (fortSoonToEnterTarget == null)
+        {
+            for (int i = 0; i < engageListResolve.Count; i++)
+            {
+                // same team!!
+                UnitCombatScript otherCombat = engageListResolve[i].GetComponent<UnitCombatScript>();
+                if (otherCombat.teamID == teamID)
+                {
+                    continue;
+                }
+
+                // ignore troops entering fort
+                if (otherCombat.fortSoonToEnterTarget != null)
+                {
+                    continue;
+                }
+
+                // check for individual grace period
+                bool skipFlag = false;
+                for (int j = 0; j < graceList.Count; j++)
+                {
+                    if (engageListResolve[i] == graceList[j].entity)
+                    {
+                        // delay the previously hit entity
+                        skipFlag = true;
+                        break;
+                    }
+                }
+
+                if (skipFlag)
+                {
+                    continue;
+                }
+
+                // send hit data to the manager
+                MeleeHitManager.instance.RegisterMeleeHit(gameObject, engageListResolve[i]);
+            }
+        }
+
+        // tick grace timers
+        for (int i = graceList.Count - 1; i >= 0; i--)
+        {
+            if (graceList[i].entity == null)
+            {
+                graceList.RemoveAt(i);
+            }
+            else if (graceList[i].Tick() == true)
+            {
+                graceList.RemoveAt(i);
+            }
+        }
+    }
+
+    // Enlist anything that matters, entering colliders:
+    // [UNIT], [FORT]
+    void OnTriggerEnter2D(Collider2D otherCol)
+    {
+        FortGarrisonScript fortScript = otherCol.gameObject.GetComponent<FortGarrisonScript>();
+        UnitCombatScript combatScript = otherCol.gameObject.GetComponent<UnitCombatScript>();
+
+        /// Troop vs Fort
+        // >> reorder the order of operation!
+        // >> fix issue with troops not entering ally fort
+        if (fortScript != null)
+        {
+            if (fortSoonToEnterTarget == null)
+            {
+                // only enter TARGETTED ally fort
+                if ((fortScript.teamID == teamID) && moveScript.targetObject == fortScript.gameObject)
+                {
+                    MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
+                    fortSoonToEnterTarget = otherCol.gameObject;
+                }
+
+                // force to enter ANY enemy fort
+                if (fortScript.teamID != teamID)
+                {
+                    MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
+                    fortSoonToEnterTarget = otherCol.gameObject;
+                }
+            }
+        }
+
+        /// Continuous Troop vs Troop check
+        if (combatScript == null)
+        {
+            return;
+        }
+        else
+        {
+            if (fortScript == null)
+            {
+                engageList.Add(otherCol.gameObject);
+            }
+        }
+
+    }
+
+    // Delist anything exiting colliders
+    void OnTriggerExit2D(Collider2D otherCol)
+    {
+        engageList.Remove(otherCol.gameObject);
+    }
+
+    void LateUpdate()
+    {
+        if (hp <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    //====================================
+    // Custom methods
+    public void TakeMeleeHit(UnitCombatScript sourceCombat)
+    {
+        // take damage
+        hp -= sourceCombat.meleePower;
+
+        // resolve hit effect: grace time
+        float graceTime = Mathf.Max(this.graceTime, sourceCombat.graceTime);
+        graceList.Add(new MeleeGraceData(sourceCombat.gameObject, graceTime));
+
+        // resolve hit effect: knockback
+        Vector3 kbVector = transform.position - sourceCombat.transform.position;
+        kbVector.Scale(new Vector3(1, 1, 0));
+        kbVector.Normalize();
+
+        crowdScript.ApplyKnockback(sourceCombat.gameObject, knockbackForce * kbVector, crowdScript.weight, knockbackDuration);
+    }
+}

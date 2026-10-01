@@ -40,18 +40,18 @@ public class UnitDeployerScript : MonoBehaviour
 
     // [WIP]
     FortHandler fortHandler;
+    OwnershipScript ownership;
 
     // debug public vars
     public float fortRadius = 1.0f;
-    public float troopGap = 0.025f;
+    public float unitGap = 0.025f;
 
     void Start()
     {
         // check and associate components
-        unitContainer = GetComponent<UnitContainerScript>();
-
-        // (temp) need a dedicate team / ownership component
-        fortHandler = GetComponent<FortHandler>();
+        unitContainer = gameObject.GetComponent<UnitContainerScript>();
+        fortHandler = gameObject.GetComponent<FortHandler>();
+        ownership = gameObject.GetComponent<OwnershipScript>();
 
     }
 
@@ -82,27 +82,29 @@ public class UnitDeployerScript : MonoBehaviour
                 Vector3 vecToTarget = deployList[i].destination.transform.position - transform.position;
                 Vector3 vecToRight = Vector3.Cross(vecToTarget, new Vector3(0, 0, 1)).normalized;
 
-                float troopDistancing = deployList[i].unitSlotRef.data.crowdRepelRadius * 2.0f + troopGap;
-                Vector3 rightmostPos = (vecToTarget.normalized * (fortRadius + troopDistancing)) + ((float)(draftCount - 1) * 0.5f * troopDistancing * vecToRight);
+                float unitDistancing = deployList[i].unitSlotRef.data.crowdRepelRadius * 2.0f + unitGap;
+                Vector3 rightmostPos = (vecToTarget.normalized * (fortRadius + unitDistancing)) + ((float)(draftCount - 1) * 0.5f * unitDistancing * vecToRight);
 
                 for (int spawn = 0; spawn < draftCount; spawn++)
                 {
-                    Vector3 pos = transform.position + (troopDistancing * spawn * -vecToRight) + rightmostPos;
+                    Vector3 pos = transform.position + (unitDistancing * spawn * -vecToRight) + rightmostPos;
 
-                    // spawn troop (wip: prototype prefabs)
-                    GameObject troopObj = Instantiate(unitGO_Prefab);
-                    troopObj.transform.position = pos;
+                    // Spawn troop (wip: prototype prefabs)
+                    GameObject unitObj = Instantiate(unitGO_Prefab);
+                    unitObj.transform.position = pos;
 
-                    // Setup troop
-                    TroopHandler handler = troopObj.GetComponent<TroopHandler>();
-                    handler.troopData = deployList[i].unitSlotRef.data;
+                    // Setup Unit
+                    UnitHandler handler = unitObj.GetComponent<UnitHandler>();
+                    handler.unitData = deployList[i].unitSlotRef.data;
 
-                    // (wip) ownership assignment
-                    handler.teamID = fortHandler.teamID;
-                    handler.teamColorLight = fortHandler.teamColorLight;
-                    handler.teamColorShade = fortHandler.teamColorShade;
+                    // > (wip) ownership assignment / data transfer
+                    handler.ownerID = ownership.ownerID;
+                    handler.teamColorLight = ownership.colorLight;
+                    handler.teamColorMain  = ownership.colorMain;
+                    handler.teamColorShade = ownership.colorShade;
 
-                    handler.marchTarget = deployList[i].destination;
+                    // > set target
+                    handler.rallyTarget = deployList[i].destination;
                     handler.Setup();
                 }
 

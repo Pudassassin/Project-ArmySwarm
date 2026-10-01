@@ -16,14 +16,23 @@ public class OwnershipScript : MonoBehaviour
     // 0  : true neutral; engage if need be (stuck, etc)
     // 1  : player exclusively
 
-    // Variables
+    //====================================
+    // Data Variables associated with this ownerID
     public int ownerID = -2;
 
-    // will never engage with a friendly entity normally
+    // color palette: highlight - main - shade
+    public Color colorLight, colorMain, colorShade;
+
+    // sprite / emblem
+
+
+    //====================================
+    // Cache Variables (temp draft)
+    // The entity's ally; will never attack them outside special conditions
     public List<int> allyIDs = new List<int>();
 
-    // will ignore 'passive' obstacle entity unless blocked by it for a threshold duration
-    //  (aka. never attack on first contact)
+    // With whom this entity is considered as obstacle, allowing itself to be cleared away by them
+    //  (aka. never be attacked on first contact, but be destroyed later to clear the way)
     public List<int> obstructIDs = new List<int>();
 
 
@@ -83,7 +92,7 @@ public class OwnershipScript : MonoBehaviour
         return !isAlly && !isObstacle;
     }
 
-    // check if this entity has to be dealt with "later" if hindered by it (eg. roadblock, actual obstruction)
+    // asking if this entity has to be dealt with "later"; being hindered by it (eg. roadblock, actual obstruction)
     public bool CheckObstacle(int requesterID)
     {
         switch (ownerID)

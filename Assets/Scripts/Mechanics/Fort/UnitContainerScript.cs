@@ -148,7 +148,7 @@ public class UnitContainerScript : MonoBehaviour
     public void AddUnit(UnitTypeSlot typeSlotRef, int count)
     {
         // Add directly to specified slot, after the checks
-        // + recursion atom
+        // + recursion atom (repeated call)
         if (typeSlotRef == null)
         {
             Debug.LogError($"UnitContainer.AddUnit - Attempted to add to a NULL slot!\n\"{gameObject.name}\" [{transform.position}]\n");
@@ -170,16 +170,30 @@ public class UnitContainerScript : MonoBehaviour
         }
     }
 
-    // MACRO method
+    // MACRO methods
     public void AddUnit(UnitStatsBasicSO unitData, int count, out UnitTypeSlot typeSlotRef)
     {
-        // MACRO method
         // 1> allocate [UNIT] slot
         // 2> add fresh new [UNIT](s)
 
         typeSlotRef = null;
         AllocateSlot(unitData, out typeSlotRef);
         AddUnit(typeSlotRef, count);
+    }
+
+    public void AddUnit(GameObject unitObj)
+    {
+        // IGNORE COMPLETELY the Unit's alliance / ownership
+        // Unit go directly into this container
+
+        UnitHandler handler = unitObj.GetComponent<UnitHandler>();
+        if (handler != null)
+        {
+            AddUnit(handler.unitData, 1, out _);
+
+            // temp solution
+            Destroy(unitObj);
+        }
     }
 
 

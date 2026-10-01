@@ -27,11 +27,16 @@ public class MeleeCombatScript : MonoBehaviour
     // temp
     public int damage = 0;
 
-    // public int rangedPower = 0;
     public float knockbackForce = 0.25f;
     public float knockbackDuration = 0.3f;
 
     public float graceTime = 0.5f;
+
+    // association / dependency
+    OwnershipScript ownership;
+    HealthHandler healthHandler;
+    CrowdPhysicScript crowdPhysic;
+    UnitMovementScript unitMovement;
 
     // var
     List<MeleeGraceData> graceList = new List<MeleeGraceData>();
@@ -43,6 +48,13 @@ public class MeleeCombatScript : MonoBehaviour
 
     //====================================
     // Unity Messages
+    void Start()
+    {
+        ownership = gameObject.GetComponent<OwnershipScript>();
+        healthHandler = gameObject.GetComponent<HealthHandler>();
+        crowdPhysic = gameObject.GetComponent<CrowdPhysicScript>();
+        unitMovement = gameObject.GetComponent<UnitMovementScript>();
+    }
 
     void Update()
     {
@@ -66,20 +78,21 @@ public class MeleeCombatScript : MonoBehaviour
         {
             for (int i = 0; i < engageListResolve.Count; i++)
             {
-                // same team!!
-                UnitCombatScript otherCombat = engageListResolve[i].GetComponent<UnitCombatScript>();
-                if (otherCombat.teamID == teamID)
+                // check if hostile
+                OwnershipScript otherOwner = engageListResolve[i].GetComponent<OwnershipScript>();
+                if (!otherOwner.CheckHostile(ownership.ownerID))
                 {
                     continue;
                 }
 
                 // ignore troops entering fort
+                MeleeCombatScript otherCombat = engageListResolve[i].GetComponent<MeleeCombatScript>();
                 if (otherCombat.fortSoonToEnterTarget != null)
                 {
                     continue;
                 }
 
-                // check for individual grace period
+                // check for grace period
                 bool skipFlag = false;
                 for (int j = 0; j < graceList.Count; j++)
                 {
@@ -97,7 +110,7 @@ public class MeleeCombatScript : MonoBehaviour
                 }
 
                 // send hit data to the manager
-                MeleeHitManager.instance.RegisterMeleeHit(gameObject, engageListResolve[i]);
+                MeleeCombatManager.instance.RegisterMeleeHit(gameObject, engageListResolve[i]);
             }
         }
 
@@ -119,26 +132,26 @@ public class MeleeCombatScript : MonoBehaviour
     // [UNIT], [FORT]
     void OnTriggerEnter2D(Collider2D otherCol)
     {
-        FortGarrisonScript fortScript = otherCol.gameObject.GetComponent<FortGarrisonScript>();
-        UnitCombatScript combatScript = otherCol.gameObject.GetComponent<UnitCombatScript>();
+        OwnershipScript otherOwner = otherCol.GetComponent<OwnershipScript>();
+        FortHandler fortHandler = otherCol.gameObject.GetComponent<FortHandler>();
+        MeleeCombatScript otherCombat = otherCol.gameObject.GetComponent<MeleeCombatScript>();
 
         /// Troop vs Fort
-        // >> reorder the order of operation!
-        // >> fix issue with troops not entering ally fort
-        if (fortScript != null)
+        if (fortHandler != null)
         {
             if (fortSoonToEnterTarget == null)
             {
-                // only enter TARGETTED ally fort
-                if ((fortScript.teamID == teamID) && moveScript.targetObject == fortScript.gameObject)
+                // (future) alliance interaction to be considered
+
+                if (otherOwner.CheckHostile(ownership.ownerID))
                 {
+                    // force to enter ANY enemy fort
                     MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
                     fortSoonToEnterTarget = otherCol.gameObject;
                 }
-
-                // force to enter ANY enemy fort
-                if (fortScript.teamID != teamID)
+                else if (unitMovement.targetObject == otherCol.gameObject)
                 {
+                    // only enter TARGETTED ally fort
                     MeleeHitManager.instance.RegisterFortEntry(gameObject, otherCol.gameObject);
                     fortSoonToEnterTarget = otherCol.gameObject;
                 }
@@ -146,13 +159,13 @@ public class MeleeCombatScript : MonoBehaviour
         }
 
         /// Continuous Troop vs Troop check
-        if (combatScript == null)
+        if (otherCombat == null)
         {
             return;
         }
         else
         {
-            if (fortScript == null)
+            if (fortHandler == null)
             {
                 engageList.Add(otherCol.gameObject);
             }
@@ -168,28 +181,32 @@ public class MeleeCombatScript : MonoBehaviour
 
     void LateUpdate()
     {
-        if (hp <= 0)
-        {
-            Destroy(gameObject);
-        }
+
     }
 
     //====================================
     // Custom methods
-    public void TakeMeleeHit(UnitCombatScript sourceCombat)
+
+
+    //====================================
+    // Taking melee hit, no special effects
+    public void TakeHit(GameObject sourceObject)
     {
-        // take damage
-        hp -= sourceCombat.meleePower;
+        MeleeCombatScript sourceCombat = sourceObject.GetComponent<MeleeCombatScript>();
+        CrowdPhysicScript sourceCrowd = sourceObject.GetComponent<CrowdPhysicScript>();
+
+        // take damage (v0.1)
+        healthHandler.TakeDamage(sourceCombat.damage);
 
         // resolve hit effect: grace time
         float graceTime = Mathf.Max(this.graceTime, sourceCombat.graceTime);
-        graceList.Add(new MeleeGraceData(sourceCombat.gameObject, graceTime));
+        graceList.Add(new MeleeGraceData(sourceObject, graceTime));
 
         // resolve hit effect: knockback
-        Vector3 kbVector = transform.position - sourceCombat.transform.position;
+        Vector3 kbVector = transform.position - sourceObject.transform.position;
         kbVector.Scale(new Vector3(1, 1, 0));
         kbVector.Normalize();
 
-        crowdScript.ApplyKnockback(sourceCombat.gameObject, knockbackForce * kbVector, crowdScript.weight, knockbackDuration);
+        crowdPhysic.TakeKnockback(knockbackForce * kbVector, sourceCrowd.weight, knockbackDuration);
     }
 }

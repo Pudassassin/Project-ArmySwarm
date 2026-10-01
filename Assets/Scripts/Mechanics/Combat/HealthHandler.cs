@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EntityCoreHandler : MonoBehaviour
+public class HealthHandler : MonoBehaviour
 {
     // Handle core stats for ANY OBJECTs that has hit points, can be interacted with via [COMBAT] and then be removed from game
     // > Hit point

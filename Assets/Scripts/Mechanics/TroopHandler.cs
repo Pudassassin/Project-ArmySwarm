@@ -21,7 +21,7 @@ public class TroopHandler : MonoBehaviour
     {
         UnitCombatScript combat = gameObject.GetComponent<UnitCombatScript>();
         UnitMovementScript movement = gameObject.GetComponent<UnitMovementScript>();
-        CrowdPhysicScript physic = gameObject.GetComponent<CrowdPhysicScript>();
+        ProtoCrowdPhysicScript physic = gameObject.GetComponent<ProtoCrowdPhysicScript>();
 
         // setup combat script
         combat.teamID = teamID;

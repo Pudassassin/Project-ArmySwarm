@@ -41,7 +41,7 @@ public class UnitCombatScript : MonoBehaviour
     List<MeleeGraceData> graceList = new List<MeleeGraceData>();
 
     UnitMovementScript moveScript;
-    CrowdPhysicScript crowdScript;
+    ProtoCrowdPhysicScript crowdScript;
 
     List<GameObject> engageList = new List<GameObject>();
     List<GameObject> engageListResolve = new List<GameObject>();
@@ -52,7 +52,7 @@ public class UnitCombatScript : MonoBehaviour
     {
         hp = maxHP;
         moveScript = gameObject.GetComponent<UnitMovementScript>();
-        crowdScript = gameObject.GetComponent<CrowdPhysicScript>();
+        crowdScript = gameObject.GetComponent<ProtoCrowdPhysicScript>();
 
         // lookup and store manager script (actually just refer to class' static property)
     }

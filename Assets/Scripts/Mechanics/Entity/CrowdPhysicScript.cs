@@ -4,18 +4,24 @@ using UnityEngine;
 public class CrowdPhysicScript : MonoBehaviour
 {
     // Lighten and simplify game object's crowding interactions without having to use the entirely of Unity's physics engine
-    // >> need to cut out [knockback] part of this code as a new class
+    // > work by "moving this entity away" from other entities
+    // > also handling and considering [KNOCKBACK] effects (simpler to be merged here)
 
     public class KnockbackData
     {
-        public GameObject source;
+        // direction and magnitude of the force
         public Vector3 vector;
+
+        // weight to consider coeff. of the knockback
         public float weight;
+
+        // duration of knockback
         public float duration;
 
-        public KnockbackData(GameObject source, Vector3 vector, float weight, float duration)
+        // force curve (future)
+
+        public KnockbackData(Vector3 vector, float weight, float duration)
         {
-            this.source = source;
             this.vector = vector;
             this.weight = weight;
             this.duration = duration;
@@ -28,30 +34,41 @@ public class CrowdPhysicScript : MonoBehaviour
         }
     }
 
-    // temp
+
+    //====================================
+    // Entity's Physic Property
     public float weight = 1;
+
+    // Crowd "elastic" property
     public float repelForce = 0.1f;
     public float radius = 0.1f;
     public float distanceMultiplier = 1;
+
+    // if true: this entity will not move itself away from other entities with crowd physics 
+    //          also clear and immune to [KNOCKBACK]
     public bool resistCrowding = false;
 
+    // vars for crowd physics calculation
     List<GameObject> clippingList = new List<GameObject>();
     List<GameObject> clippingListCal = new List<GameObject>();
     List<Vector3> repelVectors = new List<Vector3>();
     Vector3 repelVectorSum;
 
+    // if true: immune to [KNOCKBACK] and clear it out
+    public bool resistKnockback = false;
+
+    // vars for knockback effect calculation
     UnitMovementScript moveScript;
     List<KnockbackData> kbList = new List<KnockbackData>();
     List<Vector3> kbVectors = new List<Vector3>();
     Vector3 kbVectorSum;
 
-    void OnEnable()
-    {
-        moveScript = GetComponent<UnitMovementScript>();
-    }
 
+    //====================================
+    // Unity Messages
     void Update()
     {
+        // [KNOCKBACK] disable movement (wip)
         if (kbList.Count > 0)
         {
             moveScript.canMove = false;
@@ -96,7 +113,17 @@ public class CrowdPhysicScript : MonoBehaviour
 
     void LateUpdate()
     {
-        if (resistCrowding) return;
+        repelVectors.Clear();
+        repelVectorSum = Vector3.zero;
+
+        kbVectors.Clear();
+        kbVectorSum = Vector3.zero;
+
+        if (resistCrowding)
+        {
+            kbList.Clear();
+            return;
+        }
 
         // make a copy of list to be resolved
         clippingListCal.Clear();
@@ -108,9 +135,7 @@ public class CrowdPhysicScript : MonoBehaviour
         // resolve crowd physics
         // > make this game object moving itself away from other objects
         // > avoid crowd compression and objects stacking on top of each other
-        // > force vector(s) scaled based on how close to each of other objects this objects are
-        repelVectors.Clear();
-
+        // > (wip) flat scaling based on distance from each other
         foreach (var item in clippingListCal)
         {
             CrowdPhysicScript otherCrowd = item.GetComponent<CrowdPhysicScript>();
@@ -124,7 +149,6 @@ public class CrowdPhysicScript : MonoBehaviour
             repelVectors.Add(force * otherCrowd.distanceMultiplier * clippingMul * repelVector.normalized);
         }
 
-        repelVectorSum = Vector3.zero;
         foreach (var item in repelVectors)
         {
             repelVectorSum += item;
@@ -132,8 +156,13 @@ public class CrowdPhysicScript : MonoBehaviour
 
         transform.position += repelVectorSum;
 
-        // resolve knockback (need to be moved out)
-        kbVectors.Clear();
+        // resolve [KNOCKBACK]
+        if (resistKnockback)
+        {
+            kbList.Clear();
+            return;
+        }
+
         for (int i = kbList.Count - 1; i >= 0 ; i--)
         {
             kbVectors.Add(kbList[i].weight / weight * kbList[i].vector);
@@ -143,7 +172,6 @@ public class CrowdPhysicScript : MonoBehaviour
             }
         }
 
-        kbVectorSum = Vector3.zero;
         foreach (var item in kbVectors)
         {
             kbVectorSum += item;
@@ -152,20 +180,21 @@ public class CrowdPhysicScript : MonoBehaviour
         transform.position += kbVectorSum;
     }
 
-    // custom methods
 
-    // (need to be moved out)
-    public bool ApplyKnockback(GameObject source, Vector3 forceVector, float weight, float duration)
+    //====================================
+    // Custom methods
+    public void Setup()
     {
-        for (int i = 0; i < kbList.Count; i++)
-        {
-            if (kbList[i].source == source) 
-            {
-                return false;
-            }
-        }
+        moveScript = GetComponent<UnitMovementScript>();
+    }
 
-        kbList.Add(new KnockbackData(source, forceVector, weight, duration));
-        return true;
+
+    //====================================
+    // Knockback method
+    //====================================
+    // Taking in knockback force, raw and without additional effects
+    public void TakeKnockback(Vector3 forceVector, float weight, float duration)
+    {
+        kbList.Add(new KnockbackData(forceVector, weight, duration));
     }
 }

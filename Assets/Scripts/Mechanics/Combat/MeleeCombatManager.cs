@@ -10,31 +10,26 @@ public class MeleeCombatManager : MonoBehaviour
     // > handle melee-hit exclusion on conditions:
     //   > Entering [FORT] takes priority
 
-    public class MeleeHitData
+
+    // Local data structure
+    public class CombatHitData
     {
         public GameObject entityA, entityB;
-        // public float graceTimer;
-        // public bool isResolved = false;
 
-        Vector3 posA, posB;
-
-        public MeleeHitData(GameObject entityA, GameObject entityB)
+        public CombatHitData(GameObject entityA, GameObject entityB)
         {
             this.entityA = entityA;
             this.entityB = entityB;
-            posA = entityA.transform.position;
-            posB = entityB.transform.position;
-            // this.graceTimer = graceTimer;
         }
 
-        public static bool CheckPair(MeleeHitData data, GameObject entityA, GameObject entityB)
+        public static bool CheckPair(CombatHitData data, GameObject entityA, GameObject entityB)
         {
             if (data.entityA == entityA && data.entityB == entityB) return true;
             else if (data.entityA == entityB && data.entityB == entityA) return true;
             return false;
         }
 
-        public static bool CheckPairInList(List<MeleeHitData> list, GameObject entityA, GameObject entityB)
+        public static bool CheckPairInList(List<CombatHitData> list, GameObject entityA, GameObject entityB)
         {
             bool result = false;
             for (int i = 0; i < list.Count; i++)
@@ -48,12 +43,12 @@ public class MeleeCombatManager : MonoBehaviour
             return result;
         }
 
-        public static bool CheckEntity(MeleeHitData data, GameObject entity)
+        public static bool CheckEntity(CombatHitData data, GameObject entity)
         {
             return (data.entityA == entity || data.entityB == entity);
         }
 
-        public static bool CheckEntityInList(List<MeleeHitData> list, GameObject entity)
+        public static bool CheckEntityInList(List<CombatHitData> list, GameObject entity)
         {
             bool result = false;
             for (int i = 0; i < list.Count; i++)
@@ -66,31 +61,21 @@ public class MeleeCombatManager : MonoBehaviour
 
             return result;
         }
-        
-        // public static void CleanupList(ref List<MeleeHitData> list)
-        // {
-        //     for (int i = list.Count - 1; i >= 0; i--)
-        //     {
-        //         if (list[i].graceTimer <= 0.0f)
-        //         {
-        //             list.RemoveAt(i);
-        //         }
-        //     }
-        // }
     }
 
     // Singleton
     public static MeleeCombatManager instance = null;
 
-    List<MeleeHitData> hitList = new List<MeleeHitData>();
-    List<MeleeHitData> hitListToResolve = new List<MeleeHitData>();
+    // Vars
+    List<CombatHitData> hitList = new List<CombatHitData>();
+    List<CombatHitData> hitListToResolve = new List<CombatHitData>();
 
-    List<MeleeHitData> fortEntryList = new List<MeleeHitData>();
-    List<MeleeHitData> fortEntryListToResolve = new List<MeleeHitData>();
+    List<CombatHitData> fortEntryList = new List<CombatHitData>();
+    List<CombatHitData> fortEntryListToResolve = new List<CombatHitData>();
 
-    // [HideInInspector]
-    // public List<MeleeHitData> hitListGrace = new List<MeleeHitData>();
 
+    //====================================
+    // Unity Messages
     void Start()
     {
         // resolve conflict
@@ -101,7 +86,7 @@ public class MeleeCombatManager : MonoBehaviour
 
     void Update()
     {
-        /// Copy lists to resolve
+        // Copy lists to resolve
         fortEntryListToResolve.Clear();
         int resolveCount = fortEntryList.Count;
         for (int i = 0; i < resolveCount; i++)
@@ -119,11 +104,11 @@ public class MeleeCombatManager : MonoBehaviour
         hitList.RemoveRange(0, resolveCount);
 
         /// [UNIT] vs [FORT]
-        //  > excluding seiging [UNIT] from melee hit list
+        //  > excluding 'invading' [UNIT] from melee hit list
         for (int i = hitListToResolve.Count - 1; i >= 0; i--)
         {
-            bool removeFlag = MeleeHitData.CheckEntityInList(fortEntryListToResolve, hitListToResolve[i].entityA) ||
-                              MeleeHitData.CheckEntityInList(fortEntryListToResolve, hitListToResolve[i].entityB);
+            bool removeFlag = CombatHitData.CheckEntityInList(fortEntryListToResolve, hitListToResolve[i].entityA) ||
+                              CombatHitData.CheckEntityInList(fortEntryListToResolve, hitListToResolve[i].entityB);
 
             if (removeFlag)
             {
@@ -135,16 +120,21 @@ public class MeleeCombatManager : MonoBehaviour
         // iterate [FORT] hits
         for (int i = 0; i < fortEntryListToResolve.Count; i++)
         {
-            UnitCombatScript troopCombat = fortEntryListToResolve[i].entityA.GetComponent<UnitCombatScript>();
-            FortGarrisonScript fortScript = fortEntryListToResolve[i].entityB.GetComponent<FortGarrisonScript>();
+            OwnershipScript unitOwner = fortEntryListToResolve[i].entityA.GetComponent<OwnershipScript>();
+            OwnershipScript fortOwner = fortEntryListToResolve[i].entityB.GetComponent<OwnershipScript>();
+            UnitContainerScript fortContainer = fortEntryListToResolve[i].entityB.GetComponent<UnitContainerScript>();
 
-            if (troopCombat.teamID == fortScript.teamID)
+            if (unitOwner.ownerID == fortOwner.ownerID)
             {
-                fortScript.TakeTroopAlly(troopCombat.gameObject);
+                // temp solution
+                fortContainer.AddUnit(fortEntryListToResolve[i].entityA);
             }
             else
             {
-                fortScript.TakeTroopEnemy(troopCombat.gameObject);
+                // to be implemented : invasion
+                // for now just disable combat
+                MeleeCombatScript combat = fortEntryListToResolve[i].entityA.GetComponent<MeleeCombatScript>();
+                combat.enabled = false;
             }
         }
 
@@ -158,69 +148,68 @@ public class MeleeCombatManager : MonoBehaviour
                 continue;
             }
 
-            UnitCombatScript combatA = hitListToResolve[i].entityA.GetComponent<UnitCombatScript>();
-            UnitCombatScript combatB = hitListToResolve[i].entityB.GetComponent<UnitCombatScript>();
+            MeleeCombatScript   unitA_Combat = hitListToResolve[i].entityA.GetComponent<MeleeCombatScript>();
+            HealthHandler       unitA_Health = hitListToResolve[i].entityA.GetComponent<HealthHandler>();
+
+            MeleeCombatScript   unitB_Combat = hitListToResolve[i].entityB.GetComponent<MeleeCombatScript>();
+            HealthHandler       unitB_Health = hitListToResolve[i].entityB.GetComponent<HealthHandler>();
 
             // if either entity is dying (HP already <= 0), ignore the exchange
-            if (combatA.hp <= 0 || combatB.hp <= 0)
+            if (unitA_Health.hp <= 0 || unitB_Health.hp <= 0)
             {
                 continue;
             }
 
-            float graceTime = Mathf.Max(combatA.graceTime, combatB.graceTime);
-
             // resolve combat
-            combatA.TakeMeleeHit(combatB);
-            combatB.TakeMeleeHit(combatA);
+            unitA_Combat.TakeHit(unitB_Combat.gameObject);
+            unitB_Combat.TakeHit(unitA_Combat.gameObject);
 
         }
 
-        // 
     }
 
-    // custom methods
+    //====================================
+    // Custom Methods
+
+    //====================================
+    // Register combat events
+    //====================================
 
     // careful with this one; potental frequent calls
+    // > DO NOT CHECK for alliance here!
     public bool RegisterMeleeHit(GameObject entityA, GameObject entityB)
     {
+        // return true if successfully registered
         if (entityA == null || entityB == null)
         {
             return false;
         }
 
-        if (MeleeHitData.CheckPairInList(hitList, entityA, entityB))
+        if (CombatHitData.CheckPairInList(hitList, entityA, entityB))
         {
             // already in the list; prevent dupes / double regs
             return false;
         }
 
-        // UnitCombatScript combatA = entityA.GetComponent<UnitCombatScript>();
-        // UnitCombatScript combatB = entityB.GetComponent<UnitCombatScript>();
-        // if (combatA.teamID == combatB.teamID)
-        // {
-        //     // same team!
-        //     return false;
-        // }
-
-        hitList.Add(new MeleeHitData(entityA, entityB));
+        hitList.Add(new CombatHitData(entityA, entityB));
         return true;
     }
 
 
-    public bool RegisterFortEntry(GameObject troopObj,  GameObject fortObj)
+    public bool RegisterFortEntry(GameObject entityObj,  GameObject fortObj)
     {
-        if (troopObj == null || fortObj == null)
+        if (entityObj == null || fortObj == null)
         {
             return false;
         }
 
-        if (MeleeHitData.CheckPairInList(fortEntryList, troopObj, fortObj))
+        if (CombatHitData.CheckPairInList(fortEntryList, entityObj, fortObj))
         {
             // already in the list; prevent dupes / double regs
             return false;
         }
 
-        fortEntryList.Add(new MeleeHitData(troopObj, fortObj));
+        fortEntryList.Add(new CombatHitData(entityObj, fortObj));
         return true;
     }
 }

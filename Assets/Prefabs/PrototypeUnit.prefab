@@ -12,11 +12,14 @@ GameObject:
   - component: {fileID: 352064923570962875}
   - component: {fileID: 583864999380578363}
   - component: {fileID: 1073529306231993865}
-  - component: {fileID: 2920985903723525930}
-  - component: {fileID: 278415712190158069}
-  - component: {fileID: 425172050376143631}
+  - component: {fileID: -8477749077700428971}
+  - component: {fileID: -4925946220192491814}
+  - component: {fileID: -7590303351603483803}
+  - component: {fileID: 6746795892977677687}
+  - component: {fileID: 968566112734886283}
+  - component: {fileID: 7756670057492875643}
   m_Layer: 0
-  m_Name: DummyHumanUnit
+  m_Name: PrototypeUnit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -159,7 +162,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &2920985903723525930
+--- !u!114 &-8477749077700428971
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -168,16 +171,67 @@ MonoBehaviour:
   m_GameObject: {fileID: 7063580670761279398}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b89f5093cd9c81449aa335e096fe0cd3, type: 3}
+  m_Script: {fileID: 11500000, guid: 17e1954e6606b7b4b9bd5f66c0191ce9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TroopHandler
-  troopData: {fileID: 0}
-  teamID: 0
+  m_EditorClassIdentifier: Assembly-CSharp::UnitHandler
+  unitData: {fileID: 0}
+  ownerID: -2
   teamColorLight: {r: 1, g: 1, b: 1, a: 1}
+  teamColorMain: {r: 1, g: 1, b: 1, a: 1}
   teamColorShade: {r: 1, g: 1, b: 1, a: 1}
-  marchTarget: {fileID: 0}
+  rallyTarget: {fileID: 0}
   sprite: {fileID: 352064923570962875}
---- !u!114 &278415712190158069
+--- !u!114 &-4925946220192491814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7063580670761279398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26ef7437907cc38419a8991a0c8cec50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OwnershipScript
+  ownerID: -2
+  colorLight: {r: 0, g: 0, b: 0, a: 0}
+  colorMain: {r: 0, g: 0, b: 0, a: 0}
+  colorShade: {r: 0, g: 0, b: 0, a: 0}
+  allyIDs: 
+  obstructIDs: 
+--- !u!114 &-7590303351603483803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7063580670761279398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec16be87d82f5dc4d851624909a075bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthHandler
+  maxHP: 5
+  hp: 0
+--- !u!114 &6746795892977677687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7063580670761279398}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09ed9b34d3575f946bd256fd37926681, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CrowdPhysicScript
+  weight: 1
+  repelForce: 0.1
+  radius: 0.1
+  distanceMultiplier: 1
+  resistCrowding: 0
+  resistKnockback: 0
+--- !u!114 &968566112734886283
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -191,11 +245,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitMovementScript
   targetObject: {fileID: 0}
   moveSpeed: 1
-  stopDistance: 1.5
-  stopbyTime: 1.5
+  stopDistance: 2
+  stopbyTime: 3
   canMove: 1
   previousPosition: {x: 0, y: 0, z: 0}
---- !u!114 &425172050376143631
+--- !u!114 &7756670057492875643
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -204,13 +258,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 7063580670761279398}
   m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d93a2d91d79befc439d8e9a854c4276e, type: 3}
+  m_Script: {fileID: 11500000, guid: 334251e7f57882d4c8e37acee1bb12f6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UnitCombatScript
-  teamID: 0
-  maxHP: 5
-  meleePower: 1
-  knockbackForce: 0.02
-  knockbackDuration: 0.05
-  graceTime: 0.05
-  hp: 0
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeCombatScript
+  damage: 0
+  knockbackForce: 0.25
+  knockbackDuration: 0.3
+  graceTime: 0.5
